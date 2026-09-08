@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-09-09
+### Security
+- Bumped `qs` (6.15.3 → 6.16.0), `js-yaml` (4.3.1 → 4.3.2), and
+  `vitest`/`@vitest/mocker` (4.1.10 → 4.1.11) to patched versions, closing
+  4 of 6 Dependabot alerts (`GHSA-x5fp-wj9c-mxmx`, `GHSA-4mjr-xmp4-gh2g`,
+  `GHSA-2883-xcg3-v3hh`, `GHSA-82fw-gwwq-j7x9`) — all resolved within
+  existing semver ranges, so only `package-lock.json` changed. The
+  remaining two (`extract-zip`, `@mariozechner/pi-coding-agent`, both
+  dev-only via `packages/pi-system-prompt-logger`) have no patched
+  upstream version yet; tracked for a future bump.
+
 ## [0.6.0] - 2026-09-09
 ### Added
 - New Analyze-mode log provider, `claude-code`, reading the
