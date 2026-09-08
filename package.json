@@ -1,7 +1,7 @@
 {
   "name": "gh-cp-chat-analyser",
   "private": true,
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Local app to understand and optimize GitHub Copilot Chat's token usage and AI Credits cost — learn how prompt caching and token accounting work, analyze your own session logs, and export metadata for AI-assisted cost advice. Monorepo root.",
   "license": "MIT",
   "type": "module",

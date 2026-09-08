@@ -1,7 +1,7 @@
 {
   "name": "@gh-cp-chat-analyser/server",
   "private": true,
-  "version": "0.5.0",
+  "version": "0.6.0",
   "license": "MIT",
   "type": "module",
   "main": "./src/server.ts",
