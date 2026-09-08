@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- New Analyze-mode log provider, `claude-code`, reading the
+  [Claude Code CLI](https://claude.com/claude-code)'s own native JSONL
+  session logs directly (`~/.claude/projects/`) — selectable alongside
+  `vscode`/`mitmproxy`/`pi-agent` via the existing provider select, with no
+  API or frontend changes required. Unlike `pi-agent`, a session file
+  (possibly containing edited/resent branches) always lists as exactly one
+  session, following the file's own authoritative active branch. Every
+  field shape this provider depends on was confirmed against real captures
+  on this machine before being coded against, so per-turn token usage
+  (including cache read/write and reasoning tokens) is populated for real,
+  not marked unavailable pending verification; `Session.systemPrompt`
+  stays unset (Claude Code never writes its base system prompt to disk)
+  and `Session.toolInventory` stays unset (scoped out of v1).
 
 ## [0.5.0] - 2026-09-04
 ### Added

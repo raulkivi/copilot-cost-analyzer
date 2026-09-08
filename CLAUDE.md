@@ -26,7 +26,7 @@ content here.
 - Commit all changes to git as soon as a phase's exit criterion is met,
   before starting the next phase.
 - Repo status: Phases 0-9.5 complete, Phase 9.6 built pending real-data
-  verification (see below), Phases 9.7-9.8 complete — npm workspaces with
+  verification (see below), Phases 9.7-9.9 complete — npm workspaces with
   `packages/domain`
   (zod schemas + types for every architecture.md §5 shape, including
   `Session.category`/`startedAt`/`providerId`, `ConfigWarning.severity`,
@@ -42,7 +42,13 @@ content here.
   the pi coding agent's own JSONL session format directly, one branch-tree
   leaf per `Session`; built from pi's published docs schema — `tool`/
   `vision`/`reasoning`/`costAiCredits` stay unavailable pending verification
-  against a real captured session, see architecture.md §6.2.5);
+  against a real captured session, see architecture.md §6.2.5), and
+  `ClaudeCodeLogProvider` (reads the Claude Code CLI's own JSONL session
+  format directly from `~/.claude/projects/`, one `Session` per file using
+  the format's own authoritative active-branch pointer; every shape
+  confirmed against real captures on this machine, so per-turn usage
+  including cache read/write and reasoning tokens is populated for real —
+  `systemPrompt`/`toolInventory` stay unset, see architecture.md §6.2.6);
   `GET /api/log-providers` and
   `PUT /api/log-providers/active` select the source; a startup config check
   reads `settings.json` and exposes `GET /api/config/status`),

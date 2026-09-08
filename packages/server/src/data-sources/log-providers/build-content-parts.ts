@@ -8,9 +8,11 @@ import type { MessageContentPart } from "@gh-cp-chat-analyser/domain";
 // one.
 export const PLACEHOLDER_THRESHOLD_CHARS = 2000;
 
-// Only tool confirmed, from a real captured fixture, to read a file by path.
-// Extend as more are confirmed rather than guessing further tool names.
-const FILE_READING_TOOL_NAMES = new Set(["read_file"]);
+// Only tools confirmed, from a real captured fixture, to read a file by
+// path — pi's `read_file`, and Claude Code CLI's own `Read` tool (confirmed
+// against real `~/.claude/projects` captures). Extend as more are
+// confirmed rather than guessing further tool names.
+const FILE_READING_TOOL_NAMES = new Set(["read_file", "Read"]);
 
 const PATH_KEYS = ["path", "filePath", "file_path", "uri"];
 

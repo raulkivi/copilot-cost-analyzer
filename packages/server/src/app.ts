@@ -28,9 +28,11 @@ import { MitmproxyLogProvider } from "./data-sources/log-providers/mitmproxy/mit
 import { defaultMitmExchangeDecoders } from "./data-sources/log-providers/mitmproxy/decoders/default-decoders.js";
 import { resolveMitmproxyCapturesDir } from "./data-sources/log-providers/mitmproxy/resolve-mitmproxy-captures-dir.js";
 import { PiAgentLogProvider } from "./data-sources/pi-agent/pi-agent-log-provider.js";
+import { ClaudeCodeLogProvider } from "./data-sources/claude-code/claude-code-log-provider.js";
 import { resolveAppSettingsDir } from "./platform/app-settings-dir/resolve-app-settings-dir.js";
 import { resolvePiAgentSessionsDir } from "./platform/pi-agent-paths/resolve-pi-agent-sessions-dir.js";
 import { resolvePiSystemPromptLogPath } from "./platform/pi-agent-paths/resolve-pi-system-prompt-log-path.js";
+import { resolveClaudeCodeProjectsDir } from "./platform/claude-code-paths/resolve-claude-code-projects-dir.js";
 import { LogProviderRegistry, UnknownLogProviderIdError } from "./data-sources/log-providers/registry.js";
 import type { LogProvider } from "./data-sources/log-providers/log-provider.js";
 
@@ -49,7 +51,8 @@ export interface CreateAppOptions {
   mitmproxyCapturesDirPath?: string | null;
   piAgentSessionsDirPath?: string | null;
   systemPromptLogPath?: string | null;
-  // Additional providers registered alongside vscode/mitmproxy/pi-agent — exists so
+  claudeCodeProjectsDirPath?: string | null;
+  // Additional providers registered alongside vscode/mitmproxy/pi-agent/claude-code — exists so
   // tests can prove the registry is open/closed (phase-9-log-providers-
   // implementation.md §8 step 9) without any other file needing to change.
   additionalLogProviders?: LogProvider[];
@@ -82,6 +85,10 @@ export function createApp(options: CreateAppOptions = {}): Express {
     options.systemPromptLogPath !== undefined
       ? options.systemPromptLogPath
       : resolvePiSystemPromptLogPath();
+  const resolvedClaudeCodeProjectsDirPath =
+    options.claudeCodeProjectsDirPath !== undefined
+      ? options.claudeCodeProjectsDirPath
+      : resolveClaudeCodeProjectsDir();
 
   const vscodeProvider = new VscodeLogProvider({
     sessionStoreDbPath: resolvedDbPath,
@@ -96,8 +103,11 @@ export function createApp(options: CreateAppOptions = {}): Express {
     sessionsDirPath: resolvedPiAgentSessionsDirPath,
     systemPromptLogPath: resolvedSystemPromptLogPath,
   });
+  const claudeCodeProvider = new ClaudeCodeLogProvider({
+    projectsDirPath: resolvedClaudeCodeProjectsDirPath,
+  });
   const registry = new LogProviderRegistry(
-    [vscodeProvider, mitmproxyProvider, piAgentProvider, ...(options.additionalLogProviders ?? [])],
+    [vscodeProvider, mitmproxyProvider, piAgentProvider, claudeCodeProvider, ...(options.additionalLogProviders ?? [])],
     resolvedAppSettingsDir,
   );
 
@@ -238,9 +248,11 @@ export function createApp(options: CreateAppOptions = {}): Express {
   // Code/main.jsonl-specific concept. pi-agent sessions (branch below) read
   // through PiAgentLogProvider's own optional sidecar-log reader
   // (architecture.md §6.2.5) instead — populated only when the optional
-  // pi-system-prompt-logger extension captured this session. mitmproxy
-  // sessions have no artifact of this shape at all and always 404 through
-  // the VS Code path below (the session-store lookup simply never matches).
+  // pi-system-prompt-logger extension captured this session. mitmproxy and
+  // claude-code sessions have no artifact of this shape at all — Claude
+  // Code never writes its base system prompt to disk at all (architecture.md
+  // §6.2.6) — and always 404 through the VS Code path below (the
+  // session-store lookup simply never matches).
   app.get("/api/sessions/:id/system-prompt", async (req, res) => {
     if (registry.getActiveProviderId() === "pi-agent") {
       try {

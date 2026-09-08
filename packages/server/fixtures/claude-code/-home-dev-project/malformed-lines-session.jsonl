@@ -1,0 +1,7 @@
+{"parentUuid": null, "isSidechain": false, "promptId": "p1", "type": "user", "message": {"role": "user", "content": [{"type": "text", "text": "Fix the off-by-one error in the pagination helper."}]}, "uuid": "u1", "timestamp": "2026-09-04T08:00:00.000Z", "permissionMode": "default", "origin": {"kind": "human"}, "promptSource": "sdk", "userType": "external", "entrypoint": "cli", "cwd": "/home/dev/project", "sessionId": "dddddddd-4444-4555-8666-777777777777", "version": "2.1.263", "gitBranch": "main", "slug": "quick-fix"}
+{this line is not valid json at all
+{"type": "assistant", "parentUuid": "u1", "isSidechain": false, "message": {"model": "claude-sonnet-5", "id": "m1", "type": "message", "role": "assistant", "content": [{"type": "text", "text": "Fixed: changed `<=` to `<` in the page-bounds check."}], "usage": {"input_tokens": 150, "cache_creation_input_tokens": 0, "cache_read_input_tokens": 0, "output_tokens": 15, "output_tokens_details": {"thinking_tokens": 0}, "service_tier": "standard"}}, "uuid": "a1"}
+   
+not even close to json { [ } ]
+{"type": "last-prompt", "lastPrompt": "Fix the off-by-one error\u2026", "leafUuid": "a1", "sessionId": "dddddddd-4444-4555-8666-777777777777"}
+{"type": "ai-title", "aiTitle": "Fix pagination off-by-one", "sessionId": "dddddddd-4444-4555-8666-777777777777"}

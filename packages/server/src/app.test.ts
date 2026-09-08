@@ -1015,6 +1015,7 @@ describe("GET /api/log-providers and PUT /api/log-providers/active", () => {
   let appSettingsDir: string;
   let mitmproxyCapturesDirPath: string;
   let piAgentSessionsDirPath: string;
+  let claudeCodeProjectsDirPath: string;
 
   beforeEach(() => {
     dir = mkdtempSync(path.join(tmpdir(), "app-test-log-providers-"));
@@ -1023,6 +1024,7 @@ describe("GET /api/log-providers and PUT /api/log-providers/active", () => {
     appSettingsDir = path.join(dir, "app-settings");
     mitmproxyCapturesDirPath = path.join(dir, "mitmproxy-captures");
     piAgentSessionsDirPath = path.join(dir, "pi-agent-sessions");
+    claudeCodeProjectsDirPath = path.join(dir, "claude-code-projects");
   });
 
   afterEach(() => {
@@ -1036,6 +1038,7 @@ describe("GET /api/log-providers and PUT /api/log-providers/active", () => {
       appSettingsDir,
       mitmproxyCapturesDirPath,
       piAgentSessionsDirPath,
+      claudeCodeProjectsDirPath,
       ...overrides,
     });
   }
@@ -1049,10 +1052,11 @@ describe("GET /api/log-providers and PUT /api/log-providers/active", () => {
     expect(() => logProviderStatusSchema.parse(response.body)).not.toThrow();
     expect(response.body.activeProviderId).toBe("vscode");
     const ids = response.body.providers.map((p: { id: string }) => p.id);
-    expect(ids).toEqual(["vscode", "mitmproxy", "pi-agent"]);
+    expect(ids).toEqual(["vscode", "mitmproxy", "pi-agent", "claude-code"]);
     expect(response.body.providers.find((p: { id: string }) => p.id === "vscode").available).toBe(true);
     expect(response.body.providers.find((p: { id: string }) => p.id === "mitmproxy").available).toBe(false);
     expect(response.body.providers.find((p: { id: string }) => p.id === "pi-agent").available).toBe(false);
+    expect(response.body.providers.find((p: { id: string }) => p.id === "claude-code").available).toBe(false);
   });
 
   it("rejects PUT to an unregistered provider id with a 4xx", async () => {

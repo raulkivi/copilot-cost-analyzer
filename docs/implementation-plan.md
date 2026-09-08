@@ -1010,6 +1010,93 @@ natural follow-up, not bundled into this phase.
 web suite (284 tests) pass; `install.sh`/`uninstall.sh` verified manually
 against a tmpdir (both the accept and decline paths).
 
+## Phase 9.9 — Claude Code CLI log provider
+
+**Goal**: add a fourth `LogProvider`, reading the
+[Claude Code CLI](https://claude.com/claude-code)'s own JSONL session logs
+directly (architecture.md §6.2.6), with no changes to the session API
+contract or shared frontend components — the same OCP exit criterion
+Phase 9/9.6 proved, now confirmed against real captures rather than
+published-docs inference.
+
+- `platform/claude-code-paths`: resolve `~/.claude/projects` and enumerate
+  its `<encoded-cwd>/<session-id>.jsonl` files, walking exactly two levels
+  so a session's sibling `subagents/*.jsonl` directory is structurally
+  excluded.
+- `data-sources/claude-code`: a defensive line-by-line JSONL reader
+  (`claude-code-jsonl-reader.ts`); tree reconstruction over Claude Code's
+  fork-capable `uuid`/`parentUuid` entry graph, plus resolving the single
+  authoritative active branch from `last-prompt.leafUuid`
+  (`session-tree.ts`); turn grouping by real user message, distinguishing
+  a genuine human turn from a tool-result-delivery `user` line
+  (`turn-grouper.ts`); round grouping by `message.id` — the one genuinely
+  new algorithm, since one Claude Code response spans multiple JSONL lines
+  interleaved with tool results under parallel tool calls, unlike pi's
+  one-entry-per-response format (`round-grouper.ts`); usage/tool
+  extraction, summing each round's `usage` object once rather than once
+  per content-block entry (`usage-extractor.ts`); a stable file-hash
+  session id scheme with no branch suffix needed
+  (`session-id.ts`); title resolution via an `ai-title`/`slug`/cwd cascade
+  (`title-resolver.ts`); `readTurnDetail` construction populating
+  `userMessage` (unlike pi-agent's builder) and pairing tool calls with
+  results via `round-grouper.ts`'s `findToolResultFor`, preferring the
+  richer `toolUseResult` sibling field when present
+  (`turn-inspector-builder.ts`); and the `ClaudeCodeLogProvider` class
+  itself wiring all of the above to the `LogProvider` contract.
+- Since Claude Code's own `last-prompt.leafUuid` names a single
+  authoritative active branch, one `Session` is produced **per file**, not
+  per leaf branch — deliberately different from pi-agent's (§6.2.5)
+  per-leaf split, since there is no need to guess which branch matters here.
+  `Session.systemPrompt` and `Session.toolInventory` stay unset (confirmed
+  absent from disk entirely for the former, scoped out of v1 for the
+  latter) — no third branch is needed on `GET
+  /api/sessions/:id/system-prompt`; `claude-code` sessions fall through to
+  the same 404 path `mitmproxy` sessions already use.
+- `build-content-parts.ts`'s `FILE_READING_TOOL_NAMES` gains `"Read"`
+  (Claude Code's confirmed file-reading tool name), alongside pi's
+  `read_file`.
+- Register the new provider in `app.ts`'s explicit provider array alongside
+  `vscodeProvider`/`mitmproxyProvider`/`piAgentProvider`.
+- TDD order: path resolution → raw parsing → tree reconstruction → turn
+  grouping → round grouping → usage extraction → turn-inspector builder →
+  the provider class against `describeLogProviderContract` → `app.ts`
+  wiring → the existing `app.test.ts` provider-list assertion updated for a
+  fourth provider.
+- Fixtures (`packages/server/fixtures/claude-code/`) were authored from
+  field shapes confirmed by directly inspecting real captures on this
+  machine (including this repo's own session logs) — real multi-block
+  responses, real `Read` tool_use/`toolUseResult` pairs, a real
+  parallel-tool-calls interleaving pattern, and a real structural
+  parentUuid-multiplicity case that turned out to come from parallel tool
+  calls, not a conversation fork (see the fork-detection note below) —
+  rather than hand-authored from docs, the gap Phase 9.6 explicitly flagged
+  as a weakness worth not repeating. A genuine message-edit/resend fork was
+  not found in a small real session file on this machine when searched, so
+  `forked-session.jsonl`'s branch topology is synthesized (every field
+  shape used is still one confirmed elsewhere in the fixture set).
+
+**Exit criterion**: listing and selecting the `claude-code` provider works
+through the unchanged `/api/sessions` API and existing frontend components;
+`describeLogProviderContract` passes for `ClaudeCodeLogProvider` exactly as
+it does for the other three providers.
+
+**Dependencies**: Phase 9 (the `LogProvider` abstraction/registry this
+phase extends), Phase 9.5 (`readTurnDetail` is a required interface
+method).
+
+**Status (2026-09-09): complete, confirmed against real data.** Unlike
+Phase 9.6's pi-agent provider, every shape this provider depends on was
+verified directly against real `~/.claude/projects` captures on this
+machine before being coded against — no "provisional pending a real
+captured session" status applies here. One real-data-driven deviation from
+the initial plan sketch: a literal port of pi's fork-point detection
+(any `parentUuid` claimed by more than one entry) would have misreported
+parallel tool calls as forks, since a real capture shows they also produce
+`parentUuid` multiplicities structurally. Checking specifically against a
+turn's own `userMessageEntry.parentUuid` (architecture.md §6.2.6) avoids
+this without weakening genuine fork detection. All new server tests pass
+alongside the full existing suite; `tsc --noEmit` is clean.
+
 ## Phase 10 — VS Code extension packaging (future, out of MVP scope)
 
 Not part of the initial build (vision §5 "future path"); tracked here only
@@ -1045,6 +1132,8 @@ flowchart LR
     P95 --> P96["Phase 9.6<br/>pi-agent provider"]
     P96 --> P97["Phase 9.7<br/>Vendor pi-system-prompt-logger"]
     P97 --> P98["Phase 9.8<br/>Consume pi-system-prompt-logger sidecar"]
+    P9 --> P99["Phase 9.9<br/>Claude Code CLI provider"]
+    P95 --> P99
     P95 --> P10["Phase 10<br/>VS Code extension (future)"]
     P5 --> P10
 ```

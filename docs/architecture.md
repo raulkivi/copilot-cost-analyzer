@@ -1165,6 +1165,124 @@ gate it on a `built-in` component being present), and opening it without a
 match shows a plain-text message pointing at `npm run configure` rather
 than the VS Code-specific hint.
 
+#### 6.2.6 Claude Code CLI provider flow
+
+A fourth `LogProvider`, `ClaudeCodeLogProvider`
+(`data-sources/claude-code/claude-code-log-provider.ts`), reads the
+[Claude Code CLI](https://claude.com/claude-code)'s own JSONL session
+format directly:
+`~/.claude/projects/<encoded-cwd>/<session-id>.jsonl`, one file per
+session, no proxy/certificate setup required — the same low-friction
+argument that put `agent-traces.db` ahead of mitmproxy for Copilot data
+(`docs/providers/log-provider-alternatives.md` §4). Unlike pi-agent
+(§6.2.5), every shape this provider depends on — the tree structure, the
+per-response `usage` object, `toolUseResult`, `attachment`, `last-prompt`,
+`ai-title` — was confirmed directly against real captures on this machine
+(including this repo's own session logs), not inferred from published
+docs, so there is no "provisional pending a real captured session" caveat
+here.
+
+**Claude Code sessions are a branchable tree, like pi's, but with an
+authoritative active-branch pointer pi's format lacks.** Every entry
+carries `uuid`/`parentUuid` (forks happen on message-edit/resend), reconstructed by
+`session-tree.ts`'s `findLeafUuids`/`walkBranch`, direct ports of pi's
+tree-walk functions. Unlike pi-agent, `ClaudeCodeLogProvider` produces
+**one `Session` per file, not one per leaf branch**: a `type: "last-prompt"`
+entry's `leafUuid` field names the single authoritative active branch
+directly (`resolveActiveLeafUuid`, falling back to the last-occurring leaf
+when no such entry exists yet), so there is no need to guess/expose every
+fork as its own session the way the mitmproxy idle-gap split and
+pi-agent's per-leaf split both do. This also matches Claude Code's own UI
+mental model: one file is one conversation, possibly edited, not several.
+
+**Turns are grouped by real user messages, but "real" needs its own
+predicate here.** `type: "user"` is shared by two different things in this
+format: a genuine human turn, and a tool-result-delivery line the CLI
+writes back after running a tool call. `turn-grouper.ts`'s
+`isRealUserMessage` distinguishes them (message content is a string, or an
+array containing at least one non-`tool_result` block) before
+`groupBranchEntriesByUserMessage` (otherwise a direct port of pi's turn
+grouper) opens a new turn.
+
+**Round grouping is the one genuinely new algorithm — pi has no
+equivalent.** pi writes one JSONL entry per assistant response; Claude
+Code writes one *line per content block* of a response, chained by
+`parentUuid` and sharing one `message.id`. Under parallel tool calls, a
+real capture (this repo's own logs) shows a `tool_result` line for an
+earlier block sitting *between* that block and the next `tool_use` block
+of the *same* response — line adjacency cannot define a round, but
+grouping by `message.id` survives the interleaving. `round-grouper.ts`'s
+`groupTurnEntriesByRound` does this grouping; `findToolResultFor` scans
+every `user` entry in the turn (not just one round) for the matching
+`tool_use_id`, correctly reuniting calls and results regardless of what
+sits between them.
+
+**Usage summation must happen once per round, not once per entry** — a
+real capture confirms the full `usage` object is repeated identically
+across every content-block entry sharing one `message.id` (it describes
+the whole response, not the individual block), so `usage-extractor.ts`
+takes one representative entry's `usage` per round before summing across
+rounds. `uncachedInput`/`cacheWrite`/`cacheRead`/`output` sum
+`input_tokens`/`cache_creation_input_tokens`/`cache_read_input_tokens`/
+`output_tokens`; `reasoning` sums `output_tokens_details.thinking_tokens`,
+marked known (a confirmed real field, a subset of `output`, not
+additive). `tool`, `vision`, and `costAiCredits` (per-turn and
+session-level) stay permanently `{ known: false }` — no field separates
+tool/vision token cost from the rest, and no AI Credits conversion exists
+for a non-Copilot CLI, same precedent as mitmproxy's and pi-agent's
+non-Copilot cost handling.
+
+**`triggeredEvent` detects only `"fork"` in v1**, via a direct port of
+pi's fork-point detection (`findForkPointIds`: any `uuid` claimed by more
+than one entry's `parentUuid`). This needed one real-data-driven
+refinement beyond a literal port, though: a real capture shows parallel
+tool calls *also* produce `parentUuid` multiplicities structurally (one
+child continues the same response, another is that block's own
+`tool_result`) — but neither child is ever a genuine new user turn.
+Checking specifically against a turn's own `userMessageEntry.parentUuid`
+(mirroring how pi-agent-log-provider.ts already consumes its own fork
+points, rather than testing every entry indiscriminately) is sufficient to
+avoid misreporting parallel-tool-call structure as a fork: a real
+message-edit/resend is the only case that puts a genuine user turn on both
+sides of a fork point. No confirmed on-disk marker exists yet for the
+other `triggeredEvent` enum values (model-switch, compaction, clear,
+rewind, cache-expiry, instructions-change, image-change,
+reasoning-toggle) — shipped without rather than guessed, per constraint 6.
+
+**`Session.systemPrompt` and `Session.toolInventory` are left unset,
+always — a confirmed absence, not a pending gap.** Exhaustive grepping of
+real captures on this machine found the base system prompt is never
+written to disk anywhere by Claude Code CLI (only per-turn dynamic
+`attachment` injections are captured, which feed `readTurnDetail`'s
+`addedMessages`, not the session-level system prompt). This differs from
+pi-agent (§6.2.5), whose `systemPrompt` gap is filled *conditionally* by
+an optional vendored sidecar-logger extension — no equivalent exists (or
+is planned) for Claude Code CLI, so there is no third branch on `GET
+/api/sessions/:id/system-prompt`: `claude-code` sessions fall through to
+the same 404 path `mitmproxy` sessions already use. `toolInventory` stays
+unset for the same "keep v1 scoped to the two requested features" reason
+as pi-agent's current state, not a data-availability gap.
+
+`readTurnDetail` (`turn-inspector-builder.ts`) reuses
+`build-content-parts.ts`'s `buildContentPart` throughout, and — unlike
+pi-agent's builder, which ships it empty — actually populates the
+top-level `userMessage` field, following the `vscode` builder's
+precedent. A tool call's `result` prefers the richer `toolUseResult`
+sibling field (present alongside `message` on the tool-result-delivery
+entry itself) over the raw `tool_result` content block when present, since
+real captures show it often carries more structure (e.g. a `Read` call's
+`{ type, file: { filePath, content } }`). `tool-results/<id>.txt` overflow
+files referenced from an oversized `<persisted-output>` preview are not
+dereferenced — the inline preview text is treated as ordinary oversized
+text, already turned into a placeholder by `buildContentPart`'s existing
+size threshold. Subagent transcripts (a session's sibling
+`<session-id>/subagents/agent-*.jsonl` directory) are out of scope for v1;
+`platform/claude-code-paths/resolve-claude-code-projects-dir.ts`'s
+`listClaudeCodeSessionFiles` walks exactly two levels
+(`projectsDir/<encoded-cwd>/<session-id>.jsonl`) and never recurses into
+that sibling directory, excluding them structurally rather than by
+filename convention.
+
 ### 6.3 Startup configuration check
 
 ```mermaid

@@ -39,6 +39,17 @@ describe("buildContentPart", () => {
     });
   });
 
+  it("populates path for Claude Code's Read tool's args even under the size threshold", () => {
+    const part = buildContentPart({ file_path: "src/foo.ts" }, { toolName: "Read" });
+
+    expect(part).toEqual({
+      placeholder: true,
+      kind: "file",
+      path: "src/foo.ts",
+      sizeBytes: expect.any(Number),
+    });
+  });
+
   it("does not populate path for an unrecognized tool name, even with a path-shaped arg", () => {
     const part = buildContentPart({ path: "src/foo.ts" }, { toolName: "some_other_tool" });
 
