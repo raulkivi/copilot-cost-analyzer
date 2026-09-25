@@ -2,7 +2,7 @@ import type { SystemPromptRecord } from "./SystemPromptRecord.js";
 
 /**
  * The slice of BeforeAgentStartEvent this module actually needs.
- * Deliberately structural (not imported from @mariozechner/pi-coding-agent)
+ * Deliberately structural (not imported from @earendil-works/pi-coding-agent)
  * so this module has zero dependency on the Pi runtime and stays trivially
  * unit-testable. Real BeforeAgentStartEvent objects satisfy this shape.
  */

@@ -14,7 +14,7 @@ them yet — it's a standalone extension you build and install into your own
 ## Requirements
 
 - Node.js 18+
-- Pi coding agent (tested against `@mariozechner/pi-coding-agent@0.73.1`)
+- Pi coding agent (tested against `@earendil-works/pi-coding-agent@0.87.1`; Pi was published as `@mariozechner/pi-coding-agent` up to 0.73.1)
 
 ## Install
 

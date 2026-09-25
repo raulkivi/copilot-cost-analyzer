@@ -9,7 +9,10 @@ session going forward, and persist it to an append-only log for later inspection
 ## How Pi actually exposes the system prompt
 
 Verified by installing `@mariozechner/pi-coding-agent@0.73.1` and reading its
-shipped `.d.ts` files directly (not assumed from docs/blog posts):
+shipped `.d.ts` files directly (not assumed from docs/blog posts). Re-verified
+against `@earendil-works/pi-coding-agent@0.87.1` (the package was renamed when Pi
+moved to `earendil-works/pi`): same event, fields, `ctx` accessors and `~/.pi/agent/`
+paths; `systemPromptOptions` is now typed `NormalizedBuildSystemPromptOptions`.
 
 - Extensions are TS/JS modules: `export default function(pi: ExtensionAPI) { ... }`,
   placed in `~/.pi/agent/extensions/` (global) or `.pi/extensions/` (project-local),
