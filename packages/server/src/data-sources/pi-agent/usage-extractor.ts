@@ -1,5 +1,5 @@
-import { sumTokenCounts, unavailableTokenCount, type TokenCount } from "@gh-cp-chat-analyser/domain";
-import type { ToolCallRecord, TurnUsage } from "@gh-cp-chat-analyser/domain";
+import { sumTokenCounts, unavailableTokenCount, type TokenCount } from "@copilot-cost-analyzer/domain";
+import type { ToolCallRecord, TurnUsage } from "@copilot-cost-analyzer/domain";
 import { assistantMessageOf, findToolCallBlock, toolResultMessageOf, type PiAssistantMessage } from "./pi-message.js";
 import type { PiTurnGroup } from "./turn-grouper.js";
 

@@ -1,4 +1,4 @@
-import type { Session } from "@gh-cp-chat-analyser/domain";
+import type { Session } from "@copilot-cost-analyzer/domain";
 import { getJson } from "./http.js";
 
 export function fetchLearnScenarios(): Promise<Session[]> {

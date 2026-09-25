@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Session } from "@gh-cp-chat-analyser/domain";
+import type { Session } from "@copilot-cost-analyzer/domain";
 import type { Mode } from "../state/session-store.js";
 import { formatAiCredits } from "../lib/format-ai-credits.js";
 import { formatRelativeTime } from "../lib/format-relative-time.js";

@@ -920,7 +920,7 @@ format.
   `typescript ^5.7.2`), `vitest` pinned to `^4.1.10` (matching
   `domain`/`server`), added a `vitest.config.ts` (mirroring `domain`'s,
   excluding `dist/`), package scoped as
-  `@gh-cp-chat-analyser/pi-system-prompt-logger`.
+  `@copilot-cost-analyzer/pi-system-prompt-logger`.
 - Registered in the root `package.json`'s `workspaces` array, so it
   participates in `npm run build/test --workspaces --if-present` and the
   root `lint`/`format` scripts automatically.

@@ -1,6 +1,6 @@
 import { scaleLinear } from "d3-scale";
 import { line as d3Line } from "d3-shape";
-import type { Turn } from "@gh-cp-chat-analyser/domain";
+import type { Turn } from "@copilot-cost-analyzer/domain";
 
 const WIDTH = 200;
 const HEIGHT = 30;

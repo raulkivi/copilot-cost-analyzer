@@ -1,5 +1,5 @@
 {
-  "name": "@gh-cp-chat-analyser/web",
+  "name": "@copilot-cost-analyzer/web",
   "private": true,
   "version": "0.7.0",
   "license": "MIT",
@@ -10,7 +10,7 @@
     "build": "vite build"
   },
   "dependencies": {
-    "@gh-cp-chat-analyser/domain": "*",
+    "@copilot-cost-analyzer/domain": "*",
     "d3-hierarchy": "^3.1.2",
     "d3-scale": "^4.0.2",
     "d3-shape": "^3.2.0",

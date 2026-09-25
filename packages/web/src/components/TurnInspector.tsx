@@ -5,7 +5,7 @@ import type {
   MessageContentPart,
   TriggeredEvent,
   TurnInspectorDetail,
-} from "@gh-cp-chat-analyser/domain";
+} from "@copilot-cost-analyzer/domain";
 import { fetchTurnInspectorDetail } from "../api-client/sessions.js";
 import { TRIGGER_LABELS } from "../lib/trigger-labels.js";
 import { buildPrettyTokens, PAYLOAD_TOKEN_COLORS, unescapeText } from "../lib/turn-payload-pretty.js";

@@ -1,4 +1,4 @@
-import type { MessageContentPart, TurnInspectorDetail } from "@gh-cp-chat-analyser/domain";
+import type { MessageContentPart, TurnInspectorDetail } from "@copilot-cost-analyzer/domain";
 import type { JsonlEnvelope } from "../../jsonl/main-jsonl-reader.js";
 import { buildContentPart } from "../build-content-parts.js";
 

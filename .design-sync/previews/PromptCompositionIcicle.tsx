@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { PromptCompositionIcicle } from "@gh-cp-chat-analyser/web";
+import { PromptCompositionIcicle } from "@copilot-cost-analyzer/web";
 import { assignIcicleColors } from "../../packages/web/src/lib/system-prompt-menu.js";
 import { parseSystemPrompt } from "../../packages/web/src/lib/system-prompt-parser.js";
 

@@ -1,4 +1,4 @@
-import type { LogProviderStatus } from "@gh-cp-chat-analyser/domain";
+import type { LogProviderStatus } from "@copilot-cost-analyzer/domain";
 import { getJson, putJson } from "./http.js";
 
 export function fetchLogProviderStatus(): Promise<LogProviderStatus> {

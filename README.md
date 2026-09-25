@@ -59,7 +59,7 @@ have it install and run the app for you:
 
 ```
 Set up and run the GitHub Copilot Chat Cost & Token Usage Analyzer:
-1. Clone https://github.com/raulkivi/gh-cp-chat-analyser.git (or use the
+1. Clone https://github.com/raulkivi/copilot-cost-analyzer.git (or use the
    existing checkout if already in this repo) and cd into it.
 2. Confirm Node.js 22+ is installed (the server uses node:sqlite).
 3. Run `npm install`, then `npm run dev` to start the API server
@@ -89,8 +89,8 @@ Set up and run the GitHub Copilot Chat Cost & Token Usage Analyzer:
 **Install and run**
 
 ```sh
-git clone https://github.com/raulkivi/gh-cp-chat-analyser.git
-cd gh-cp-chat-analyser
+git clone https://github.com/raulkivi/copilot-cost-analyzer.git
+cd copilot-cost-analyzer
 npm install
 npm run dev        # starts the API server (127.0.0.1:3001) and the web app (127.0.0.1:5173)
 ```
@@ -159,9 +159,9 @@ runtime, never hardcoded:
   [mitmproxy setup](docs/mitmproxy-setup.md)). There's no OS-level
   discovery here — you manually drop the exported `.har` file into this
   app's own settings directory, under a `mitmproxy-captures` subfolder:
-  `~/.config/gh-cp-chat-analyser/mitmproxy-captures/` on Linux (respects
-  `$XDG_CONFIG_HOME`), `~/Library/Application Support/gh-cp-chat-analyser/...`
-  on macOS, `%APPDATA%/gh-cp-chat-analyser/...` on Windows. Each `.har` is
+  `~/.config/copilot-cost-analyzer/mitmproxy-captures/` on Linux (respects
+  `$XDG_CONFIG_HOME`), `~/Library/Application Support/copilot-cost-analyzer/...`
+  on macOS, `%APPDATA%/copilot-cost-analyzer/...` on Windows. Each `.har` is
   split into one or more sessions by idle gaps in the captured traffic.
 
 - **[pi coding agent](https://pi.dev)** — reads pi's own session JSONL

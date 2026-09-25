@@ -1,4 +1,4 @@
-import type { MessageContentPart } from "@gh-cp-chat-analyser/domain";
+import type { MessageContentPart } from "@copilot-cost-analyzer/domain";
 
 // Provider-neutral placeholder detection, shared by VscodeLogProvider's
 // per-round message diffing and MitmproxyLogProvider's raw-exchange text —

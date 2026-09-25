@@ -1,4 +1,4 @@
-import type { ConfigStatus, ConfigWarning } from "@gh-cp-chat-analyser/domain";
+import type { ConfigStatus, ConfigWarning } from "@copilot-cost-analyzer/domain";
 import { readVscodeSettings } from "../../data-sources/vscode-settings/read-vscode-settings.js";
 import { resolveVscodeSettingsPath } from "../../data-sources/vscode-settings/vscode-settings-path.js";
 

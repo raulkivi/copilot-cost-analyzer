@@ -6,7 +6,7 @@ import type {
   ToolInventoryEntry,
   TurnInspectorDetail,
   TurnUsage,
-} from "@gh-cp-chat-analyser/domain";
+} from "@copilot-cost-analyzer/domain";
 import {
   classifyEnvelopesAvailability,
   readMainJsonlFile,

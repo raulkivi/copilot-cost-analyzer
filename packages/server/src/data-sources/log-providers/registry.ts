@@ -1,4 +1,4 @@
-import type { LogProviderDescriptor, LogProviderStatus } from "@gh-cp-chat-analyser/domain";
+import type { LogProviderDescriptor, LogProviderStatus } from "@copilot-cost-analyzer/domain";
 import {
   DEFAULT_ACTIVE_PROVIDER_ID,
   readActiveProviderId,

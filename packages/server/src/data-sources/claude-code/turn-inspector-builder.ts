@@ -1,4 +1,4 @@
-import type { MessageContentPart, TurnInspectorDetail } from "@gh-cp-chat-analyser/domain";
+import type { MessageContentPart, TurnInspectorDetail } from "@copilot-cost-analyzer/domain";
 import { buildContentPart } from "../log-providers/build-content-parts.js";
 import type { ClaudeCodeRawEntry } from "./claude-code-jsonl-reader.js";
 import { findToolResultFor, groupTurnEntriesByRound } from "./round-grouper.js";

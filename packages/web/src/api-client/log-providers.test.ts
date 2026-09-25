@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { LogProviderStatus } from "@gh-cp-chat-analyser/domain";
+import type { LogProviderStatus } from "@copilot-cost-analyzer/domain";
 import { fetchLogProviderStatus, setActiveLogProvider } from "./log-providers.js";
 
 const status: LogProviderStatus = {

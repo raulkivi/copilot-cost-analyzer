@@ -262,7 +262,7 @@ Use the 'runSubagent' tool with the agent name to run the subagent.
 </agent>
 </agents>
 
-<attachment filePath="/home/devuser/src/gh-cp-chat-analyser/.github/copilot-instructions.md">
+<attachment filePath="/home/devuser/src/copilot-cost-analyzer/.github/copilot-instructions.md">
 # Copilot instructions
 
 Project-specific guidance for GitHub Copilot in this repo. Full context
@@ -408,7 +408,7 @@ The `model=` parameter rides on the existing `plan_turn` call — it does **not*
 SOLID Design Principles MUST be used: Single responsibility, Open–closed, Liskov substitution, Interface segregation, Dependency inversion
 **Architecture diagrams** use Mermaid (````mermaid` fences) directly in Markdown — prefer `C4Component` for component relations, `classDiagram` for module structure, and `sequenceDiagram` for runtime flows.
 </attachment>
-<attachment filePath="/home/devuser/src/gh-cp-chat-analyser/CLAUDE.md">
+<attachment filePath="/home/devuser/src/copilot-cost-analyzer/CLAUDE.md">
 # CLAUDE.md
 
 Project-specific guidance for working in this repo. Full context lives in

@@ -2,7 +2,7 @@ import path from "node:path";
 import type {
   SystemPromptComponent,
   ToolInventoryEntry,
-} from "@gh-cp-chat-analyser/domain";
+} from "@copilot-cost-analyzer/domain";
 import {
   readSystemPromptText,
   readToolDefinitionNames,

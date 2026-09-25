@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { configStatusSchema } from "@gh-cp-chat-analyser/domain";
+import { configStatusSchema } from "@copilot-cost-analyzer/domain";
 import { checkConfig } from "./config-check.js";
 
 const NOW = () => "2026-08-08T00:00:00.000Z";

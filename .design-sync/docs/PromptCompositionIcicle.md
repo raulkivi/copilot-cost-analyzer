@@ -7,7 +7,7 @@ Zoomable icicle diagram of a parsed system prompt's tag structure — click a re
 **Not self-contained — build its props from the two helper functions shipped alongside it on the same bundle global, don't hand-construct them:**
 
 ```jsx
-const { PromptCompositionIcicle, parseSystemPrompt, assignIcicleColors } = window.GhCpChatAnalyserUI;
+const { PromptCompositionIcicle, parseSystemPrompt, assignIcicleColors } = window.CopilotCostAnalyzerUI;
 
 function Panel({ promptText }) {
   const { root, malformed } = parseSystemPrompt(promptText);

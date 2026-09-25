@@ -20,7 +20,7 @@ Warning: Small todo list (<3 items). This task might not need a todo list.
 ##############################################################################
 Response · round 0
 ##############################################################################
-{"type":"tool_call","id":"toolu_01STZ1CdsrCmLL9MKbff9hMz","name":"read_file","arguments":"{\"filePath\": \"/home/luarvik/src/gh-cp-chat-analyser/docs/UserGuide.md\", \"startLine\": 1, \"endLine\": 80}"}{"type":"tool_call","id":"toolu_01QMSZ4vxwXikgb3oxHTXSTy","name":"list_dir","arguments":"{\"path\": \"/home/luarvik/src/gh-cp-chat-analyser/docs/images\"}"}
+{"type":"tool_call","id":"toolu_01STZ1CdsrCmLL9MKbff9hMz","name":"read_file","arguments":"{\"filePath\": \"/home/luarvik/src/copilot-cost-analyzer/docs/UserGuide.md\", \"startLine\": 1, \"endLine\": 80}"}{"type":"tool_call","id":"toolu_01QMSZ4vxwXikgb3oxHTXSTy","name":"list_dir","arguments":"{\"path\": \"/home/luarvik/src/copilot-cost-analyzer/docs/images\"}"}
 
   -- Reasoning --
 [encrypted]
@@ -29,17 +29,17 @@ Response · round 0
 Request · round 1
 ##############################################################################
   ▸ tool: list_dir
-    args:   {"path":"/home/luarvik/src/gh-cp-chat-analyser/docs/images"}
+    args:   {"path":"/home/luarvik/src/copilot-cost-analyzer/docs/images"}
     result: [📄 2.6 KB]
   ▸ tool: read_file
-    args:   [📄 /home/luarvik/src/gh-cp-chat-analyser/docs/UserGuide.md · 97 B]
+    args:   [📄 /home/luarvik/src/copilot-cost-analyzer/docs/UserGuide.md · 97 B]
     result: [📄 4.9 KB]
-{"type":"tool_call","id":"toolu_01STZ1CdsrCmLL9MKbff9hMz","name":"read_file","arguments":{"filePath":"/home/luarvik/src/gh-cp-chat-analyser/docs/UserGuide.md","startLine":1,"endLine":80}}{"type":"tool_call","id":"toolu_01QMSZ4vxwXikgb3oxHTXSTy","name":"list_dir","arguments":{"path":"/home/luarvik/src/gh-cp-chat-analyser/docs/images"}}[📄 3.8 KB]{"type":"tool_call_response","id":"toolu_01QMSZ4vxwXikgb3oxHTXSTy","response":[{"type":"text","text":"analyze-tabs.png\nguide-analyze-explanation.png\nguide-analyze-systemprompt.png\nguide-analyze-table.png\nguide-analyze-tools.png\nguide-config-banner.png\nguide-config-ok.png\nguide-empty-analyze.png\nguide-empty-learn.png\nguide-scrubber.png\nguide-search.png\nguide-trigger-tag.png\nlanding-page.png\nlearn-scenario.png"}]}
+{"type":"tool_call","id":"toolu_01STZ1CdsrCmLL9MKbff9hMz","name":"read_file","arguments":{"filePath":"/home/luarvik/src/copilot-cost-analyzer/docs/UserGuide.md","startLine":1,"endLine":80}}{"type":"tool_call","id":"toolu_01QMSZ4vxwXikgb3oxHTXSTy","name":"list_dir","arguments":{"path":"/home/luarvik/src/copilot-cost-analyzer/docs/images"}}[📄 3.8 KB]{"type":"tool_call_response","id":"toolu_01QMSZ4vxwXikgb3oxHTXSTy","response":[{"type":"text","text":"analyze-tabs.png\nguide-analyze-explanation.png\nguide-analyze-systemprompt.png\nguide-analyze-table.png\nguide-analyze-tools.png\nguide-config-banner.png\nguide-config-ok.png\nguide-empty-analyze.png\nguide-empty-learn.png\nguide-scrubber.png\nguide-search.png\nguide-trigger-tag.png\nlanding-page.png\nlearn-scenario.png"}]}
 
 ##############################################################################
 Response · round 1
 ##############################################################################
-{"type":"tool_call","id":"toolu_01Kj8AMK3cGC2kKG8nECq6bh","name":"read_file","arguments":"{\"filePath\": \"/home/luarvik/src/gh-cp-chat-analyser/docs/UserGuide.md\", \"startLine\": 80, \"endLine\": 200}"}
+{"type":"tool_call","id":"toolu_01Kj8AMK3cGC2kKG8nECq6bh","name":"read_file","arguments":"{\"filePath\": \"/home/luarvik/src/copilot-cost-analyzer/docs/UserGuide.md\", \"startLine\": 80, \"endLine\": 200}"}
 
   -- Reasoning --
 [encrypted]
@@ -48,9 +48,9 @@ Response · round 1
 Request · round 2
 ##############################################################################
   ▸ tool: read_file
-    args:   [📄 /home/luarvik/src/gh-cp-chat-analyser/docs/UserGuide.md · 99 B]
+    args:   [📄 /home/luarvik/src/copilot-cost-analyzer/docs/UserGuide.md · 99 B]
     result: [📄 4.9 KB]
-{"type":"tool_call","id":"toolu_01Kj8AMK3cGC2kKG8nECq6bh","name":"read_file","arguments":{"filePath":"/home/luarvik/src/gh-cp-chat-analyser/docs/UserGuide.md","startLine":80,"endLine":200}}[📄 3.8 KB]
+{"type":"tool_call","id":"toolu_01Kj8AMK3cGC2kKG8nECq6bh","name":"read_file","arguments":{"filePath":"/home/luarvik/src/copilot-cost-analyzer/docs/UserGuide.md","startLine":80,"endLine":200}}[📄 3.8 KB]
 
 ##############################################################################
 Response · round 2
@@ -59,7 +59,7 @@ The image links themselves are correct — every referenced path (`images/*.png`
 
 - `images/landing-page.png`, `images/guide-trigger-tag.png`, `images/guide-scrubber.png`, `images/guide-search.png`, `images/guide-config-banner.png`, `images/guide-config-ok.png`, `images/guide-analyze-table.png`, `images/guide-analyze-explanation.png`, `images/guide-analyze-systemprompt.png`, `images/guide-analyze-tools.png`, `images/guide-empty-learn.png`, `images/guide-empty-analyze.png` — all present and correctly cased.
 
-The actual cause is your editor tab: it's open as a `git:` URI (`git:/home/luarvik/src/gh-cp-chat-analyser/docs/UserGuide.md?...ref=972c7177...`), i.e. a diff/history view of a git-tracked revision, not the file on disk. VS Code's Markdown preview can't resolve relative image paths against that virtual git document, so images fail to render even though the links are correct.
+The actual cause is your editor tab: it's open as a `git:` URI (`git:/home/luarvik/src/copilot-cost-analyzer/docs/UserGuide.md?...ref=972c7177...`), i.e. a diff/history view of a git-tracked revision, not the file on disk. VS Code's Markdown preview can't resolve relative image paths against that virtual git document, so images fail to render even though the links are correct.
 
 Open the real file (`docs/UserGuide.md` from the file explorer, not from Source Control/history) and preview that instead — it should render fine.
 

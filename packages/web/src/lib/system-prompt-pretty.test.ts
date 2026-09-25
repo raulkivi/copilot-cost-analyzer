@@ -40,7 +40,7 @@ describe("buildPrettyTextSegments", () => {
   });
 
   it("expands a leaf tag whose content is long, even without child tags", () => {
-    const longContent = "Project: gh-cp-chat-analyser — a local-first analytics dashboard for GitHub Copilot Chat.";
+    const longContent = "Project: copilot-cost-analyzer — a local-first analytics dashboard for GitHub Copilot Chat.";
     const text = `<attachment filePath="CLAUDE.md">${longContent}</attachment>`;
 
     const segments = build(text);

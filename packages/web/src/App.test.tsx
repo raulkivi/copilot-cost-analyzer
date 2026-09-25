@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { ConfigStatus } from "@gh-cp-chat-analyser/domain";
+import type { ConfigStatus } from "@copilot-cost-analyzer/domain";
 import { App } from "./App.js";
 import { makeTurn } from "./test-support/turn-fixture.js";
 

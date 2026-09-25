@@ -1,5 +1,5 @@
 {
-  "name": "@gh-cp-chat-analyser/pi-system-prompt-logger",
+  "name": "@copilot-cost-analyzer/pi-system-prompt-logger",
   "private": true,
   "version": "0.1.0",
   "description": "Pi coding-agent extension that logs the fully assembled system prompt once per session.",

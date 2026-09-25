@@ -10,7 +10,7 @@ import {
   logProviderStatusSchema,
   sessionSchema,
   turnInspectorDetailSchema,
-} from "@gh-cp-chat-analyser/domain";
+} from "@copilot-cost-analyzer/domain";
 import { createApp } from "./app.js";
 import { listLearnScenarios } from "./data-sources/learn-scenarios/loader.js";
 import {

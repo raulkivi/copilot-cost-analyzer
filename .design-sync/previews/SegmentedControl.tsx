@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { SegmentedControl } from "@gh-cp-chat-analyser/web";
+import { SegmentedControl } from "@copilot-cost-analyzer/web";
 
 // A radio-group rendered as a pill-shaped tab strip — used for the
 // Learn/Analyze mode switch (AppHeader.tsx) and the Pretty/Raw/Icicle

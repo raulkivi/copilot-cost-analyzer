@@ -1,4 +1,4 @@
-import type { ToolCallRecord, TurnUsage } from "@gh-cp-chat-analyser/domain";
+import type { ToolCallRecord, TurnUsage } from "@copilot-cost-analyzer/domain";
 
 // mitmproxy-only shapes — never imported outside data-sources/log-providers
 // /mitmproxy. Header/body values are already redacted (redact-headers.ts) by

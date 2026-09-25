@@ -1,4 +1,4 @@
-import { Blueprint } from "@gh-cp-chat-analyser/web";
+import { Blueprint } from "@copilot-cost-analyzer/web";
 
 // The DS's card container: a hairline-bordered frame with four "+"
 // registration marks at its corners — used throughout the app to wrap

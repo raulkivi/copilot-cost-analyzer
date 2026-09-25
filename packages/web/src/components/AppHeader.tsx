@@ -1,4 +1,4 @@
-import type { LogProviderDescriptor } from "@gh-cp-chat-analyser/domain";
+import type { LogProviderDescriptor } from "@copilot-cost-analyzer/domain";
 import type { Mode } from "../state/session-store.js";
 import { Blueprint } from "./ui/Blueprint.js";
 import { SegmentedControl } from "./ui/SegmentedControl.js";

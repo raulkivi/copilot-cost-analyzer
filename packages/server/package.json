@@ -1,5 +1,5 @@
 {
-  "name": "@gh-cp-chat-analyser/server",
+  "name": "@copilot-cost-analyzer/server",
   "private": true,
   "version": "0.7.0",
   "license": "MIT",
@@ -11,7 +11,7 @@
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@gh-cp-chat-analyser/domain": "*",
+    "@copilot-cost-analyzer/domain": "*",
     "express": "^5.2.1",
     "gpt-tokenizer": "^3.4.0",
     "jsonc-parser": "^3.3.1"

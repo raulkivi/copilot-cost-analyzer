@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { sessionSchema } from "@gh-cp-chat-analyser/domain";
+import { sessionSchema } from "@copilot-cost-analyzer/domain";
 import { getLearnScenario, listLearnScenarios } from "./loader.js";
 
 describe("learn-scenarios loader", () => {

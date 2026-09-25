@@ -3,7 +3,7 @@
 No provider or wrapper is required — none of the components read from React context. Just import from the bundle global and render.
 
 ```jsx
-const { Blueprint, SegmentedControl, Tag } = window.GhCpChatAnalyserUI;
+const { Blueprint, SegmentedControl, Tag } = window.CopilotCostAnalyzerUI;
 ```
 
 One component, `PromptCompositionIcicle` (in the `charts` group), is **not** a drop-in-and-render primitive like the three above — it needs its `root`/`malformed`/`colors` props *built* first from two helper functions shipped alongside it on the same bundle global (`parseSystemPrompt`, `assignIcicleColors`). Read `components/charts/PromptCompositionIcicle/PromptCompositionIcicle.prompt.md` before using it — the pattern doesn't generalize from the other three.
@@ -39,7 +39,7 @@ This is a **global-class** design system, not CSS-in-JS or CSS Modules — every
 ## Example composition
 
 ```jsx
-const { Blueprint, SegmentedControl, Tag } = window.GhCpChatAnalyserUI;
+const { Blueprint, SegmentedControl, Tag } = window.CopilotCostAnalyzerUI;
 
 function Panel() {
   const [format, setFormat] = React.useState("pretty");

@@ -1,5 +1,5 @@
-import { sumTokenCounts, unavailableTokenCount, type TokenCount } from "@gh-cp-chat-analyser/domain";
-import type { ToolCallRecord, TurnUsage } from "@gh-cp-chat-analyser/domain";
+import { sumTokenCounts, unavailableTokenCount, type TokenCount } from "@copilot-cost-analyzer/domain";
+import type { ToolCallRecord, TurnUsage } from "@copilot-cost-analyzer/domain";
 import type { ClaudeCodeRawEntry } from "./claude-code-jsonl-reader.js";
 import { groupTurnEntriesByRound, type ClaudeCodeRound } from "./round-grouper.js";
 import type { ClaudeCodeTurnGroup } from "./turn-grouper.js";

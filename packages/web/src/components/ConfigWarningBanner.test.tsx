@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import type { ConfigWarning } from "@gh-cp-chat-analyser/domain";
+import type { ConfigWarning } from "@copilot-cost-analyzer/domain";
 import { ConfigWarningBanner } from "./ConfigWarningBanner.js";
 
 const warning: ConfigWarning = {

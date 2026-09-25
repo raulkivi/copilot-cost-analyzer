@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Session } from "@gh-cp-chat-analyser/domain";
+import type { Session } from "@copilot-cost-analyzer/domain";
 
 export type Mode = "learn" | "analyze";
 export type RightTab = "explanation" | "system-prompt" | "tools";

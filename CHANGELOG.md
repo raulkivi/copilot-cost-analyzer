@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Renamed the project from `gh-cp-chat-analyser` to `copilot-cost-analyzer`
+  (repo, package name, workspace scope, settings directory) for
+  discoverability — the old slug wasn't something anyone would search for.
+  Existing local settings under the old per-user config directory are
+  migrated automatically on first run after upgrading.
 
 ## [0.7.0] - 2026-09-09
 ### Security

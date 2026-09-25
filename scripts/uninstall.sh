@@ -4,7 +4,7 @@
 # re-run — a no-op if neither is present.
 set -euo pipefail
 
-MARKER="# gh-cp-chat-analyser alias (managed by scripts/install.sh)"
+MARKER="# copilot-cost-analyzer alias (managed by scripts/install.sh)"
 
 detect_profile() {
   case "${SHELL:-}" in
@@ -30,7 +30,7 @@ if [ -f "$PROFILE" ] && grep -qF "$MARKER" "$PROFILE"; then
   echo "Removed the alias from ${PROFILE}"
   echo "Run 'source ${PROFILE}' (or open a new terminal) for this to take effect."
 else
-  echo "No gh-cp-chat-analyser alias found in ${PROFILE} — nothing to do."
+  echo "No copilot-cost-analyzer alias found in ${PROFILE} — nothing to do."
 fi
 
 PI_EXTENSIONS_DIR="${CPCHAT_PI_EXTENSIONS_DIR:-$HOME/.pi/agent/extensions}"

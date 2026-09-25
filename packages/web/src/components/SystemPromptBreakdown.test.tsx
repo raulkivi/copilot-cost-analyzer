@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import type { SystemPromptComponent } from "@gh-cp-chat-analyser/domain";
+import type { SystemPromptComponent } from "@copilot-cost-analyzer/domain";
 import { SystemPromptBreakdown } from "./SystemPromptBreakdown.js";
 
 describe("SystemPromptBreakdown", () => {

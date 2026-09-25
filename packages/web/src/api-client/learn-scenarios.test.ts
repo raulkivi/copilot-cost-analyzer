@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
-import type { Session } from "@gh-cp-chat-analyser/domain";
+import type { Session } from "@copilot-cost-analyzer/domain";
 import { fetchLearnScenario, fetchLearnScenarios } from "./learn-scenarios.js";
 
 const scenarioSummary = { id: "cache-basics", mode: "learn" } as unknown as Session;

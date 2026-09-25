@@ -145,7 +145,7 @@ parse with `jq`.
 ## Status: vendored, not yet consumed
 
 This package was originally a standalone repo; it was vendored into
-`gh-cp-chat-analyser` as `packages/pi-system-prompt-logger` to become a
+`copilot-cost-analyzer` as `packages/pi-system-prompt-logger` to become a
 first-class part of the app rather than an external companion tool. As of
 this vendoring, **nothing in `packages/server` or `packages/web` reads the
 `system-prompts.jsonl` sidecar log this extension produces** — the `pi-agent`

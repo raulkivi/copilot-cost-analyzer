@@ -5,7 +5,7 @@ A Pi coding-agent extension that captures the fully assembled system prompt
 and appends it to a JSONL log. See `DESIGN.md` for the architecture and
 verified API details.
 
-This package lives inside the `gh-cp-chat-analyser` monorepo as
+This package lives inside the `copilot-cost-analyzer` monorepo as
 `packages/pi-system-prompt-logger`, one of its npm workspaces. It has no
 runtime dependency on `packages/server`/`packages/web` and isn't consumed by
 them yet — it's a standalone extension you build and install into your own

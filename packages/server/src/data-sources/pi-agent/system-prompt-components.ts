@@ -1,7 +1,7 @@
 import {
   unavailableTokenCount,
   type SystemPromptComponent,
-} from "@gh-cp-chat-analyser/domain";
+} from "@copilot-cost-analyzer/domain";
 import { estimateTokenCount } from "../jsonl/token-estimator.js";
 import type { PiSystemPromptSidecarRecord } from "./system-prompt-sidecar-reader.js";
 

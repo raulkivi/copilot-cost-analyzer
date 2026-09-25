@@ -1,6 +1,6 @@
 import { countTokens } from "gpt-tokenizer/encoding/o200k_base";
-import type { TokenCount } from "@gh-cp-chat-analyser/domain";
-import { estimatedTokenCount } from "@gh-cp-chat-analyser/domain";
+import type { TokenCount } from "@copilot-cost-analyzer/domain";
+import { estimatedTokenCount } from "@copilot-cost-analyzer/domain";
 
 // o200k_base is the encoding VS Code's own model catalog (models.json) names
 // for Claude models — its client-side prompt-budget estimator, not the real

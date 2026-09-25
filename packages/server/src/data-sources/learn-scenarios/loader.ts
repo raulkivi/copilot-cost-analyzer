@@ -7,7 +7,7 @@ import {
   unavailableTokenCount,
   type Session,
   type TokenCount,
-} from "@gh-cp-chat-analyser/domain";
+} from "@copilot-cost-analyzer/domain";
 
 const fixturesDir = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),

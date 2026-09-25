@@ -217,8 +217,8 @@ automatically splits them at any gap of more than 30 minutes between two
 captured exchanges.
 
 ```sh
-mkdir -p ~/.config/gh-cp-chat-analyser/mitmproxy-captures
-cp capture.har ~/.config/gh-cp-chat-analyser/mitmproxy-captures/
+mkdir -p ~/.config/copilot-cost-analyzer/mitmproxy-captures
+cp capture.har ~/.config/copilot-cost-analyzer/mitmproxy-captures/
 ```
 
 (`~/.config` is `$XDG_CONFIG_HOME` if you have it set; macOS/Windows use

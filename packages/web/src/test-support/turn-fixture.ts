@@ -1,4 +1,4 @@
-import type { Turn } from "@gh-cp-chat-analyser/domain";
+import type { Turn } from "@copilot-cost-analyzer/domain";
 
 export function makeTurn(overrides: Partial<Turn> = {}): Turn {
   return {

@@ -1,4 +1,4 @@
-import type { Turn } from "@gh-cp-chat-analyser/domain";
+import type { Turn } from "@copilot-cost-analyzer/domain";
 import type { Mode } from "../state/session-store.js";
 import { TRIGGER_LABELS } from "../lib/trigger-labels.js";
 import { Blueprint } from "./ui/Blueprint.js";

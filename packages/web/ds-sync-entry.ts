@@ -12,7 +12,7 @@ export { PromptCompositionIcicle } from "./src/charts/PromptCompositionIcicle.js
 
 // Not components — helper functions PromptCompositionIcicle needs its
 // `root`/`malformed`/`colors` props built from. Exported here too so
-// they're callable from the bundle global (window.GhCpChatAnalyserUI.*),
+// they're callable from the bundle global (window.CopilotCostAnalyzerUI.*),
 // not just importable inside this repo.
 export { parseSystemPrompt } from "./src/lib/system-prompt-parser.js";
 export { assignIcicleColors } from "./src/lib/system-prompt-menu.js";

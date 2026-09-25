@@ -1,8 +1,8 @@
 {
   "projectId": "cada26a4-e1c4-4b9f-a3dd-4a7fa5e325ea",
   "shape": "package",
-  "pkg": "@gh-cp-chat-analyser/web",
-  "globalName": "GhCpChatAnalyserUI",
+  "pkg": "@copilot-cost-analyzer/web",
+  "globalName": "CopilotCostAnalyzerUI",
   "entry": "packages/web/ds-sync-entry.ts",
   "srcDir": "src",
   "cssEntry": "src/theme.css",

@@ -1,4 +1,4 @@
-import type { Session, TurnInspectorDetail } from "@gh-cp-chat-analyser/domain";
+import type { Session, TurnInspectorDetail } from "@copilot-cost-analyzer/domain";
 
 // The provider-neutral boundary (architecture.md §6.2.1/§12): every log
 // source — VS Code local logs, mitmproxy captures, or a future source —

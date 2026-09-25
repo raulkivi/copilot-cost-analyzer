@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Session } from "@gh-cp-chat-analyser/domain";
+import type { Session } from "@copilot-cost-analyzer/domain";
 import { buildAdviceBundle } from "../lib/build-advice-bundle.js";
 
 interface AdviceExportDialogProps {

@@ -30,6 +30,7 @@ import { resolveMitmproxyCapturesDir } from "./data-sources/log-providers/mitmpr
 import { PiAgentLogProvider } from "./data-sources/pi-agent/pi-agent-log-provider.js";
 import { ClaudeCodeLogProvider } from "./data-sources/claude-code/claude-code-log-provider.js";
 import { resolveAppSettingsDir } from "./platform/app-settings-dir/resolve-app-settings-dir.js";
+import { migrateLegacyAppSettingsDir } from "./platform/app-settings-dir/migrate-legacy-app-settings-dir.js";
 import { resolvePiAgentSessionsDir } from "./platform/pi-agent-paths/resolve-pi-agent-sessions-dir.js";
 import { resolvePiSystemPromptLogPath } from "./platform/pi-agent-paths/resolve-pi-system-prompt-log-path.js";
 import { resolveClaudeCodeProjectsDir } from "./platform/claude-code-paths/resolve-claude-code-projects-dir.js";
@@ -72,6 +73,9 @@ export function createApp(options: CreateAppOptions = {}): Express {
     options.agentTracesDbPath !== undefined
       ? options.agentTracesDbPath
       : resolveAgentTracesDbPath();
+  if (!options.appSettingsDir) {
+    migrateLegacyAppSettingsDir();
+  }
   const resolvedAppSettingsDir = options.appSettingsDir ?? resolveAppSettingsDir();
   const resolvedMitmproxyCapturesDirPath =
     options.mitmproxyCapturesDirPath !== undefined

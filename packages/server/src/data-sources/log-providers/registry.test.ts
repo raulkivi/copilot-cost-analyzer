@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import type { Session, TurnInspectorDetail } from "@gh-cp-chat-analyser/domain";
+import type { Session, TurnInspectorDetail } from "@copilot-cost-analyzer/domain";
 import { LogProviderRegistry, UnknownLogProviderIdError } from "./registry.js";
 import type { LogProvider, LogProviderAvailability } from "./log-provider.js";
 

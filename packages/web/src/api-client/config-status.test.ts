@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
-import type { ConfigStatus } from "@gh-cp-chat-analyser/domain";
+import type { ConfigStatus } from "@copilot-cost-analyzer/domain";
 import { fetchConfigStatus, updateRetentionThreshold } from "./config-status.js";
 
 const status = {

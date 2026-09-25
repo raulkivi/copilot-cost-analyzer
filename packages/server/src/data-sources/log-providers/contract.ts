@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { sessionSchema } from "@gh-cp-chat-analyser/domain";
+import { sessionSchema } from "@copilot-cost-analyzer/domain";
 import type { LogProvider } from "./log-provider.js";
 
 // Shared assertions every LogProvider must satisfy, regardless of source

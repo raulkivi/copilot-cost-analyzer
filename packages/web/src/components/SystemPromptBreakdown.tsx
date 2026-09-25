@@ -1,4 +1,4 @@
-import type { SystemPromptComponent, TokenCount } from "@gh-cp-chat-analyser/domain";
+import type { SystemPromptComponent, TokenCount } from "@copilot-cost-analyzer/domain";
 import { Blueprint } from "./ui/Blueprint.js";
 
 const ESTIMATED_TOOLTIP =

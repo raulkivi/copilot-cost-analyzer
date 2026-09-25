@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
-import type { Session, TurnInspectorDetail } from "@gh-cp-chat-analyser/domain";
+import type { Session, TurnInspectorDetail } from "@copilot-cost-analyzer/domain";
 import {
   fetchSession,
   fetchSessions,

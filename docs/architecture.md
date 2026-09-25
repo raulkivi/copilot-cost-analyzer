@@ -1440,7 +1440,7 @@ see §13 for what's still open.
 ## 10. Proposed project structure
 
 ```
-gh-cp-chat-analyser/
+copilot-cost-analyzer/
   docs/
     vision.md
     architecture.md

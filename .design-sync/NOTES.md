@@ -1,4 +1,4 @@
-# design-sync notes — gh-cp-chat-analyser
+# design-sync notes — copilot-cost-analyzer
 
 ## Repo shape
 
@@ -12,7 +12,7 @@ No library build exists for these components, so the converter runs in **synth-e
 
 `.d.ts` extraction from synth mode can't resolve unexported local prop-type aliases, so all 4 props contracts are hand-written via `cfg.dtsPropsFor`. Two simplifications to know about: `SegmentedControl`'s real source is generic (`<T extends string>`) — the synced contract uses plain `string` since dtsPropsFor bodies can't carry generics. `PromptCompositionIcicle`'s real `root` prop is a recursive `PromptNode` tree — the synced contract types `children` as `unknown[]` (dtsPropsFor has no prelude slot to declare a named recursive type) rather than trying to express the recursion.
 
-**`PromptCompositionIcicle` is not self-contained** — unlike the 3 UI primitives, it needs its `root`/`malformed`/`colors` props *built* from two parsing helpers, not just passed through. `ds-sync-entry.ts` re-exports `parseSystemPrompt` (from `src/lib/system-prompt-parser.ts`) and `assignIcicleColors` (from `src/lib/system-prompt-menu.ts`) alongside the components specifically so the design agent can call them from the bundle global. The full usage pattern is documented in `.design-sync/docs/PromptCompositionIcicle.md`, wired in via `cfg.docsMap` (this component's `.prompt.md` is NOT synthesized from JSDoc — the source JSDoc on the component stays written for real app developers, in plain ES-import terms, deliberately different phrasing from the docsMap doc's `window.GhCpChatAnalyserUI.*` framing, which only makes sense to an agent that has the compiled bundle and nothing else).
+**`PromptCompositionIcicle` is not self-contained** — unlike the 3 UI primitives, it needs its `root`/`malformed`/`colors` props *built* from two parsing helpers, not just passed through. `ds-sync-entry.ts` re-exports `parseSystemPrompt` (from `src/lib/system-prompt-parser.ts`) and `assignIcicleColors` (from `src/lib/system-prompt-menu.ts`) alongside the components specifically so the design agent can call them from the bundle global. The full usage pattern is documented in `.design-sync/docs/PromptCompositionIcicle.md`, wired in via `cfg.docsMap` (this component's `.prompt.md` is NOT synthesized from JSDoc — the source JSDoc on the component stays written for real app developers, in plain ES-import terms, deliberately different phrasing from the docsMap doc's `window.CopilotCostAnalyzerUI.*` framing, which only makes sense to an agent that has the compiled bundle and nothing else).
 
 npm/node in this shell are broken (see `project_npm_shell_function_broken` — bare `npm`/`node` recurse infinitely due to a broken nvm wrapper); use `command npm`/`command node` to bypass the shell function.
 

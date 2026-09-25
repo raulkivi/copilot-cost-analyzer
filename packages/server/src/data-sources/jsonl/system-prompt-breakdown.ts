@@ -1,5 +1,5 @@
-import type { SystemPromptComponent, TokenCount } from "@gh-cp-chat-analyser/domain";
-import { unavailableTokenCount } from "@gh-cp-chat-analyser/domain";
+import type { SystemPromptComponent, TokenCount } from "@copilot-cost-analyzer/domain";
+import { unavailableTokenCount } from "@copilot-cost-analyzer/domain";
 import type { JsonlEnvelope } from "./main-jsonl-reader.js";
 import { estimateTokenCount } from "./token-estimator.js";
 

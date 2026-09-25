@@ -72,4 +72,4 @@ Note the known design-system bug flagged previously and still unfixed: `.card, .
 - `examples/TurnInspector-Example-Multiround.txt` — the 6-round capture used for turn 2
 
 ## How to see it in the mock
-Analyze mode → "gh-cp-chat-analyser — Phase 4 build" → select turn 1 or 2 → "Inspect request/response".
+Analyze mode → "copilot-cost-analyzer — Phase 4 build" → select turn 1 or 2 → "Inspect request/response".

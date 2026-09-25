@@ -1,5 +1,5 @@
-import type { TurnUsage } from "@gh-cp-chat-analyser/domain";
-import { unavailableTokenCount } from "@gh-cp-chat-analyser/domain";
+import type { TurnUsage } from "@copilot-cost-analyzer/domain";
+import { unavailableTokenCount } from "@copilot-cost-analyzer/domain";
 
 // Shared reasons every mitmproxy decoder falls back to when a category is
 // genuinely not observable from vendor API traffic, so the same gap always

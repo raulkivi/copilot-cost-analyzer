@@ -1,7 +1,7 @@
 import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
-import type { Session, TokenCount, Turn, TurnInspectorDetail, TurnUsage } from "@gh-cp-chat-analyser/domain";
-import { unavailableTokenCount } from "@gh-cp-chat-analyser/domain";
+import type { Session, TokenCount, Turn, TurnInspectorDetail, TurnUsage } from "@copilot-cost-analyzer/domain";
+import { unavailableTokenCount } from "@copilot-cost-analyzer/domain";
 import type { LogProvider, LogProviderAvailability } from "../log-provider.js";
 import { buildContentPart } from "../build-content-parts.js";
 import { harEntryToRawExchange, readHarFile, type HarEntry } from "./har.js";

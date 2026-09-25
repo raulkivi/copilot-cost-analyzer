@@ -1,4 +1,4 @@
-import { Tag } from "@gh-cp-chat-analyser/web";
+import { Tag } from "@copilot-cost-analyzer/web";
 
 // Small inline label used for model names, trigger events, and status
 // flags across the turns table, session list, and turn inspector.

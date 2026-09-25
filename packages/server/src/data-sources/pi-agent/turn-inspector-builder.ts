@@ -1,4 +1,4 @@
-import type { TurnInspectorDetail } from "@gh-cp-chat-analyser/domain";
+import type { TurnInspectorDetail } from "@copilot-cost-analyzer/domain";
 import { buildContentPart } from "../log-providers/build-content-parts.js";
 import { assistantMessageOf, findToolCallBlock, messageOf, toolResultMessageOf, type PiAssistantMessage } from "./pi-message.js";
 import type { PiRawEntry } from "./pi-jsonl-reader.js";

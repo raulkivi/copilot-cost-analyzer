@@ -1,4 +1,4 @@
-import type { ToolInventoryEntry } from "@gh-cp-chat-analyser/domain";
+import type { ToolInventoryEntry } from "@copilot-cost-analyzer/domain";
 import { Blueprint } from "./ui/Blueprint.js";
 
 interface ToolInventoryPanelProps {

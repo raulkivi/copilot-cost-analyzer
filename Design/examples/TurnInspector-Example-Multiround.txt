@@ -36,7 +36,7 @@ Request · round 1
 ##############################################################################
 Response · round 1
 ##############################################################################
-{"type":"tool_call","id":"toolu_017KdmcgfGWLS83Q62fnm3b3","name":"read_file","arguments":"{\"filePath\": \"/home/luarvik/src/gh-cp-chat-analyser/docs/agentic-coding-explained.md\", \"startLine\": 27, \"endLine\": 50}"}
+{"type":"tool_call","id":"toolu_017KdmcgfGWLS83Q62fnm3b3","name":"read_file","arguments":"{\"filePath\": \"/home/luarvik/src/copilot-cost-analyzer/docs/agentic-coding-explained.md\", \"startLine\": 27, \"endLine\": 50}"}
 
   -- Reasoning --
 [encrypted]
@@ -45,9 +45,9 @@ Response · round 1
 Request · round 2
 ##############################################################################
   ▸ tool: read_file
-    args:   [📄 /home/luarvik/src/gh-cp-chat-analyser/docs/agentic-coding-explained.md · 113 B]
+    args:   [📄 /home/luarvik/src/copilot-cost-analyzer/docs/agentic-coding-explained.md · 113 B]
     result: [📄 4.9 KB]
-{"type":"tool_call","id":"toolu_017KdmcgfGWLS83Q62fnm3b3","name":"read_file","arguments":{"filePath":"/home/luarvik/src/gh-cp-chat-analyser/docs/agentic-coding-explained.md","startLine":27,"endLine":50}}[📄 2.2 KB]
+{"type":"tool_call","id":"toolu_017KdmcgfGWLS83Q62fnm3b3","name":"read_file","arguments":{"filePath":"/home/luarvik/src/copilot-cost-analyzer/docs/agentic-coding-explained.md","startLine":27,"endLine":50}}[📄 2.2 KB]
 
 ##############################################################################
 Response · round 2
@@ -68,7 +68,7 @@ Request · round 3
 ##############################################################################
 Response · round 3
 ##############################################################################
-{"type":"tool_call","id":"toolu_015JeP4FWRPR3DuerCnQffey","name":"read_file","arguments":"{\"filePath\": \"/home/luarvik/src/gh-cp-chat-analyser/docs/agentic-coding-explained.md\", \"startLine\": 600, \"endLine\": 1000}"}
+{"type":"tool_call","id":"toolu_015JeP4FWRPR3DuerCnQffey","name":"read_file","arguments":"{\"filePath\": \"/home/luarvik/src/copilot-cost-analyzer/docs/agentic-coding-explained.md\", \"startLine\": 600, \"endLine\": 1000}"}
 
   -- Reasoning --
 [encrypted]
@@ -77,9 +77,9 @@ Response · round 3
 Request · round 4
 ##############################################################################
   ▸ tool: read_file
-    args:   [📄 /home/luarvik/src/gh-cp-chat-analyser/docs/agentic-coding-explained.md · 116 B]
+    args:   [📄 /home/luarvik/src/copilot-cost-analyzer/docs/agentic-coding-explained.md · 116 B]
     result: [📄 4.9 KB]
-{"type":"tool_call","id":"toolu_015JeP4FWRPR3DuerCnQffey","name":"read_file","arguments":{"filePath":"/home/luarvik/src/gh-cp-chat-analyser/docs/agentic-coding-explained.md","startLine":600,"endLine":1000}}[📄 26.6 KB]
+{"type":"tool_call","id":"toolu_015JeP4FWRPR3DuerCnQffey","name":"read_file","arguments":{"filePath":"/home/luarvik/src/copilot-cost-analyzer/docs/agentic-coding-explained.md","startLine":600,"endLine":1000}}[📄 26.6 KB]
 
 ##############################################################################
 Response · round 4

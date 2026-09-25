@@ -1,4 +1,4 @@
-import type { ConfigStatus } from "@gh-cp-chat-analyser/domain";
+import type { ConfigStatus } from "@copilot-cost-analyzer/domain";
 import { getJson, putJson } from "./http.js";
 
 export function fetchConfigStatus(): Promise<ConfigStatus> {

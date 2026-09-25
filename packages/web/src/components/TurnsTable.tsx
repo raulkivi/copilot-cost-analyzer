@@ -1,5 +1,5 @@
-import type { TokenCount, Turn } from "@gh-cp-chat-analyser/domain";
-import { sumTokenCounts } from "@gh-cp-chat-analyser/domain";
+import type { TokenCount, Turn } from "@copilot-cost-analyzer/domain";
+import { sumTokenCounts } from "@copilot-cost-analyzer/domain";
 import { formatAiCredits } from "../lib/format-ai-credits.js";
 import { onKeyActivate } from "../lib/on-key-activate.js";
 import { TRIGGER_LABELS } from "../lib/trigger-labels.js";

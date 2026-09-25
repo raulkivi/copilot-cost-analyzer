@@ -7,7 +7,7 @@ import {
   type Turn,
   type TurnInspectorDetail,
   type TurnUsage,
-} from "@gh-cp-chat-analyser/domain";
+} from "@copilot-cost-analyzer/domain";
 import type { LogProvider, LogProviderAvailability } from "../log-providers/log-provider.js";
 import { listClaudeCodeSessionFiles } from "../../platform/claude-code-paths/resolve-claude-code-projects-dir.js";
 import { readClaudeCodeSessionFile, type ClaudeCodeRawEntry } from "./claude-code-jsonl-reader.js";

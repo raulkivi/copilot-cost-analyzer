@@ -7,7 +7,7 @@ set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 ALIAS_NAME="${CPCHAT_ALIAS:-cpchat}"
-MARKER="# gh-cp-chat-analyser alias (managed by scripts/install.sh)"
+MARKER="# copilot-cost-analyzer alias (managed by scripts/install.sh)"
 ALIAS_LINE="alias ${ALIAS_NAME}='cd \"${REPO_DIR}\" && npm start'"
 
 detect_profile() {

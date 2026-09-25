@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { ConfigWarning, LogProviderDescriptor, Session } from "@gh-cp-chat-analyser/domain";
+import type { ConfigWarning, LogProviderDescriptor, Session } from "@copilot-cost-analyzer/domain";
 import { fetchConfigStatus, updateRetentionThreshold } from "./api-client/config-status.js";
 import { fetchLearnScenarios } from "./api-client/learn-scenarios.js";
 import { fetchLogProviderStatus, setActiveLogProvider } from "./api-client/log-providers.js";

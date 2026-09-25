@@ -1,5 +1,5 @@
 {
-  "name": "@gh-cp-chat-analyser/domain",
+  "name": "@copilot-cost-analyzer/domain",
   "private": true,
   "version": "0.7.0",
   "license": "MIT",

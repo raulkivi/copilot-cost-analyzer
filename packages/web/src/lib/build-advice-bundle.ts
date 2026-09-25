@@ -1,5 +1,5 @@
-import type { Session, TokenCount, TriggeredEvent, Turn } from "@gh-cp-chat-analyser/domain";
-import { sumTokenCounts } from "@gh-cp-chat-analyser/domain";
+import type { Session, TokenCount, TriggeredEvent, Turn } from "@copilot-cost-analyzer/domain";
+import { sumTokenCounts } from "@copilot-cost-analyzer/domain";
 
 export interface BuildAdviceBundleOptions {
   includeToolArgs?: boolean;

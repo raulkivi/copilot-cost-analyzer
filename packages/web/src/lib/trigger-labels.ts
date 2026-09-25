@@ -1,4 +1,4 @@
-import type { TriggeredEvent } from "@gh-cp-chat-analyser/domain";
+import type { TriggeredEvent } from "@copilot-cost-analyzer/domain";
 
 export const TRIGGER_LABELS: Record<TriggeredEvent, string> = {
   "model-switch": "model switch",

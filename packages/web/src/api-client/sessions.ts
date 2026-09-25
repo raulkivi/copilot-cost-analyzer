@@ -1,4 +1,4 @@
-import type { Session, TurnInspectorDetail } from "@gh-cp-chat-analyser/domain";
+import type { Session, TurnInspectorDetail } from "@copilot-cost-analyzer/domain";
 import { getJson, getText } from "./http.js";
 
 export function fetchSessions(): Promise<Session[]> {

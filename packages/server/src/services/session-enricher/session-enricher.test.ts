@@ -4,7 +4,7 @@ import {
   type SystemPromptComponent,
   type ToolInventoryEntry,
   type TurnUsage,
-} from "@gh-cp-chat-analyser/domain";
+} from "@copilot-cost-analyzer/domain";
 import type {
   SessionFileRow,
   SessionRow,

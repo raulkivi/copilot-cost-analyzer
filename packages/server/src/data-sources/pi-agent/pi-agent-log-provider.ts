@@ -8,7 +8,7 @@ import {
   type Turn,
   type TurnInspectorDetail,
   type TurnUsage,
-} from "@gh-cp-chat-analyser/domain";
+} from "@copilot-cost-analyzer/domain";
 import type { LogProvider, LogProviderAvailability } from "../log-providers/log-provider.js";
 import { listPiAgentSessionFiles } from "../../platform/pi-agent-paths/resolve-pi-agent-sessions-dir.js";
 import { assistantMessageOf, messageOf } from "./pi-message.js";
