@@ -10,6 +10,12 @@ updates:
     groups:
       npm:
         patterns: ['*']
+    # Majors (React 19, zod 4, TypeScript 7, ESLint 10, Vitest 5, ...) need
+    # code changes and break the grouped PR; they are upgraded deliberately.
+    # update-types only affects version updates, so security fixes still arrive.
+    ignore:
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
   - package-ecosystem: github-actions
     directory: /
     schedule:
