@@ -1,6 +1,6 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { InMemorySeenTracker } from "./adapters/InMemorySeenTracker.js";
 import { JsonlFileSink } from "./adapters/JsonlFileSink.js";
 import { NodeFileSystem } from "./adapters/NodeFileSystem.js";

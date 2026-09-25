@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Security
+- `pi-system-prompt-logger` now builds against `@earendil-works/pi-coding-agent`
+  0.87.1, the renamed Pi package, instead of the abandoned
+  `@mariozechner/pi-coding-agent` 0.73.1. Closes the last 5 Dependabot alerts
+  (`GHSA-jfgx-wxx8-mp94`, `GHSA-r95r-rj6r-c39x`, `GHSA-7v5m-pr3q-6453`, fixed
+  upstream in Pi 0.78.1, and two `extract-zip` symlink advisories; the new
+  package no longer depends on `extract-zip`). Dev-only: the extension imports
+  Pi's types, and the extension API it uses is unchanged.
+
 ### Changed
 - Renamed the project from `gh-cp-chat-analyser` to `copilot-cost-analyzer`
   (repo, package name, workspace scope, settings directory) for

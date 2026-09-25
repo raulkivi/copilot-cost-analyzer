@@ -13,7 +13,7 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@mariozechner/pi-coding-agent": "^0.73.1",
+    "@earendil-works/pi-coding-agent": "^0.87.1",
     "esbuild": "^0.28.2",
     "vitest": "^4.1.10"
   }

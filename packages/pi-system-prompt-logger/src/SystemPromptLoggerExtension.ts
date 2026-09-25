@@ -1,4 +1,4 @@
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { buildSystemPromptRecord } from "./domain/buildSystemPromptRecord.js";
 import type { SeenSessionTracker } from "./ports/SeenSessionTracker.js";
 import type { SystemPromptSink } from "./ports/SystemPromptSink.js";
