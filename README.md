@@ -43,6 +43,9 @@ cards with corner registration marks, Barlow/Barlow Condensed type.*
 - [mitmproxy setup](docs/mitmproxy-setup.md) — how to install mitmproxy,
   trust its CA, capture LLM-provider traffic, and export it as a `.har`
   file the app's `mitmproxy` provider can read.
+- [Threat model](docs/threat-model.md) — trust boundaries, STRIDE analysis
+  of the API/data-source surface, and verified mitigations (path
+  traversal, SQL injection, XSS, CSRF) vs. residual risks.
 - [pi-system-prompt-logger](packages/pi-system-prompt-logger/README.md) —
   optional Pi coding-agent extension, vendored in this repo, that captures
   pi's assembled system prompt to a JSONL sidecar log so Analyze mode's
