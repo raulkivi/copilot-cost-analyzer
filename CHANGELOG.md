@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Pi's types, and the extension API it uses is unchanged.
 
 ### Changed
+- Web UI now runs on React 19; runtime dependencies upgraded to zod 4
+  and gpt-tokenizer 4. No behaviour change.
 - Renamed the project from `gh-cp-chat-analyser` to `copilot-cost-analyzer`
   (repo, package name, workspace scope, settings directory) for
   discoverability — the old slug wasn't something anyone would search for.
