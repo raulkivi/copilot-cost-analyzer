@@ -194,10 +194,12 @@ describe("GET /api/learn/scenarios/:id", () => {
 
 describe("GET /api/sessions", () => {
   let dir: string;
+  let appSettingsDir: string;
   let dbPath: string;
 
   beforeEach(() => {
     dir = mkdtempSync(path.join(tmpdir(), "app-test-session-store-"));
+    appSettingsDir = path.join(dir, "app-settings");
     dbPath = path.join(dir, "session-store.db");
     seedFixtureDb(dbPath);
   });
@@ -207,7 +209,7 @@ describe("GET /api/sessions", () => {
   });
 
   it("returns only GitHub Copilot Chat sessions as schema-valid summaries", async () => {
-    const app = createApp({ sessionStoreDbPath: dbPath });
+    const app = createApp({ appSettingsDir, sessionStoreDbPath: dbPath });
 
     const response = await request(app).get("/api/sessions");
 
@@ -222,6 +224,7 @@ describe("GET /api/sessions", () => {
 
   it("returns an empty list when no session store db is available", async () => {
     const app = createApp({
+      appSettingsDir,
       sessionStoreDbPath: path.join(dir, "does-not-exist.db"),
     });
 
@@ -246,7 +249,7 @@ describe("GET /api/sessions", () => {
       path.join(sessionLogDir, "main.jsonl"),
       lines.map((line) => JSON.stringify(line)).join("\n") + "\n",
     );
-    const app = createApp({ sessionStoreDbPath: dbPath, debugLogsDirPaths: [debugLogsDirPath] });
+    const app = createApp({ appSettingsDir, sessionStoreDbPath: dbPath, debugLogsDirPaths: [debugLogsDirPath] });
 
     const response = await request(app).get("/api/sessions");
 
@@ -257,6 +260,7 @@ describe("GET /api/sessions", () => {
 
   it("leaves costAiCredits unavailable when main.jsonl is missing for a session", async () => {
     const app = createApp({
+      appSettingsDir,
       sessionStoreDbPath: dbPath,
       debugLogsDirPaths: [path.join(dir, "debug-logs")],
     });
@@ -273,11 +277,13 @@ describe("GET /api/sessions", () => {
 
 describe("GET /api/sessions/:id", () => {
   let dir: string;
+  let appSettingsDir: string;
   let dbPath: string;
   let debugLogsDirPath: string;
 
   beforeEach(() => {
     dir = mkdtempSync(path.join(tmpdir(), "app-test-session-store-"));
+    appSettingsDir = path.join(dir, "app-settings");
     dbPath = path.join(dir, "session-store.db");
     seedFixtureDb(dbPath);
     debugLogsDirPath = path.join(dir, "debug-logs");
@@ -289,6 +295,7 @@ describe("GET /api/sessions/:id", () => {
 
   it("returns the full analyzed session with real turns, usage marked unavailable", async () => {
     const app = createApp({
+      appSettingsDir,
       sessionStoreDbPath: dbPath,
       debugLogsDirPaths: [debugLogsDirPath],
     });
@@ -312,6 +319,7 @@ describe("GET /api/sessions/:id", () => {
     seedCorruptedDb(corruptDbPath);
 
     const app = createApp({
+      appSettingsDir,
       sessionStoreDbPath: corruptDbPath,
       debugLogsDirPaths: [path.join(corruptDir, "debug-logs")],
     });
@@ -331,6 +339,7 @@ describe("GET /api/sessions/:id", () => {
       `${JSON.stringify({ v: 1, ts: 1, dur: 0, sid: "session-1", type: "session_start", name: "session_start", spanId: "a", status: "ok", attrs: {} })}\n`,
     );
     const app = createApp({
+      appSettingsDir,
       sessionStoreDbPath: dbPath,
       debugLogsDirPaths: [debugLogsDirPath],
     });
@@ -375,6 +384,7 @@ describe("GET /api/sessions/:id", () => {
       lines.map((line) => JSON.stringify(line)).join("\n") + "\n",
     );
     const app = createApp({
+      appSettingsDir,
       sessionStoreDbPath: dbPath,
       debugLogsDirPaths: [debugLogsDirPath],
     });
@@ -436,6 +446,7 @@ describe("GET /api/sessions/:id", () => {
       lines.map((line) => JSON.stringify(line)).join("\n") + "\n",
     );
     const app = createApp({
+      appSettingsDir,
       sessionStoreDbPath: dbPath,
       debugLogsDirPaths: [debugLogsDirPath],
     });
@@ -475,6 +486,7 @@ describe("GET /api/sessions/:id", () => {
       lines.map((line) => JSON.stringify(line)).join("\n") + "\n",
     );
     const app = createApp({
+      appSettingsDir,
       sessionStoreDbPath: dbPath,
       debugLogsDirPaths: [debugLogsDirPath],
       agentTracesDbPath: null,
@@ -516,6 +528,7 @@ describe("GET /api/sessions/:id", () => {
       { spanId: "span-b", responseId: "resp-b", cacheWrite: 1618, reasoning: 0 },
     ]);
     const app = createApp({
+      appSettingsDir,
       sessionStoreDbPath: dbPath,
       debugLogsDirPaths: [debugLogsDirPath],
       agentTracesDbPath,
@@ -607,6 +620,7 @@ describe("GET /api/sessions/:id", () => {
       }),
     );
     const app = createApp({
+      appSettingsDir,
       sessionStoreDbPath: dbPath,
       debugLogsDirPaths: [debugLogsDirPath],
     });
@@ -644,6 +658,7 @@ describe("GET /api/sessions/:id", () => {
 
   it("returns 404 for a session filtered out by the agent_name scoping rule", async () => {
     const app = createApp({
+      appSettingsDir,
       sessionStoreDbPath: dbPath,
       debugLogsDirPaths: [debugLogsDirPath],
     });
@@ -655,6 +670,7 @@ describe("GET /api/sessions/:id", () => {
 
   it("returns 404 for an unknown session id", async () => {
     const app = createApp({
+      appSettingsDir,
       sessionStoreDbPath: dbPath,
       debugLogsDirPaths: [debugLogsDirPath],
     });
@@ -666,6 +682,7 @@ describe("GET /api/sessions/:id", () => {
 
   it("returns 404 when no session store db is available", async () => {
     const app = createApp({
+      appSettingsDir,
       sessionStoreDbPath: path.join(dir, "does-not-exist.db"),
       debugLogsDirPaths: [debugLogsDirPath],
     });
@@ -678,11 +695,13 @@ describe("GET /api/sessions/:id", () => {
 
 describe("GET /api/sessions/:id/turns/:turnIndex", () => {
   let dir: string;
+  let appSettingsDir: string;
   let dbPath: string;
   let debugLogsDirPath: string;
 
   beforeEach(() => {
     dir = mkdtempSync(path.join(tmpdir(), "app-test-turn-detail-"));
+    appSettingsDir = path.join(dir, "app-settings");
     dbPath = path.join(dir, "session-store.db");
     seedFixtureDb(dbPath);
     debugLogsDirPath = path.join(dir, "debug-logs");
@@ -704,7 +723,7 @@ describe("GET /api/sessions/:id/turns/:turnIndex", () => {
       path.join(sessionLogDir, "main.jsonl"),
       lines.map((line) => JSON.stringify(line)).join("\n") + "\n",
     );
-    const app = createApp({ sessionStoreDbPath: dbPath, debugLogsDirPaths: [debugLogsDirPath] });
+    const app = createApp({ appSettingsDir, sessionStoreDbPath: dbPath, debugLogsDirPaths: [debugLogsDirPath] });
 
     const response = await request(app).get("/api/sessions/session-1/turns/0");
 
@@ -714,7 +733,7 @@ describe("GET /api/sessions/:id/turns/:turnIndex", () => {
   });
 
   it("returns 404 for an unknown session id", async () => {
-    const app = createApp({ sessionStoreDbPath: dbPath, debugLogsDirPaths: [debugLogsDirPath] });
+    const app = createApp({ appSettingsDir, sessionStoreDbPath: dbPath, debugLogsDirPaths: [debugLogsDirPath] });
 
     const response = await request(app).get("/api/sessions/does-not-exist/turns/0");
 
@@ -722,7 +741,7 @@ describe("GET /api/sessions/:id/turns/:turnIndex", () => {
   });
 
   it("returns 404 for a turnIndex the session doesn't have", async () => {
-    const app = createApp({ sessionStoreDbPath: dbPath, debugLogsDirPaths: [debugLogsDirPath] });
+    const app = createApp({ appSettingsDir, sessionStoreDbPath: dbPath, debugLogsDirPaths: [debugLogsDirPath] });
 
     const response = await request(app).get("/api/sessions/session-1/turns/99");
 
@@ -730,7 +749,7 @@ describe("GET /api/sessions/:id/turns/:turnIndex", () => {
   });
 
   it("returns 400 for a non-numeric turnIndex", async () => {
-    const app = createApp({ sessionStoreDbPath: dbPath, debugLogsDirPaths: [debugLogsDirPath] });
+    const app = createApp({ appSettingsDir, sessionStoreDbPath: dbPath, debugLogsDirPaths: [debugLogsDirPath] });
 
     const response = await request(app).get("/api/sessions/session-1/turns/not-a-number");
 
@@ -738,7 +757,7 @@ describe("GET /api/sessions/:id/turns/:turnIndex", () => {
   });
 
   it("returns 400 for a negative turnIndex", async () => {
-    const app = createApp({ sessionStoreDbPath: dbPath, debugLogsDirPaths: [debugLogsDirPath] });
+    const app = createApp({ appSettingsDir, sessionStoreDbPath: dbPath, debugLogsDirPaths: [debugLogsDirPath] });
 
     const response = await request(app).get("/api/sessions/session-1/turns/-1");
 
@@ -748,11 +767,13 @@ describe("GET /api/sessions/:id/turns/:turnIndex", () => {
 
 describe("GET /api/sessions/:id/system-prompt", () => {
   let dir: string;
+  let appSettingsDir: string;
   let dbPath: string;
   let debugLogsDirPath: string;
 
   beforeEach(() => {
     dir = mkdtempSync(path.join(tmpdir(), "app-test-system-prompt-"));
+    appSettingsDir = path.join(dir, "app-settings");
     dbPath = path.join(dir, "state.vscdb");
     debugLogsDirPath = path.join(dir, "debug-logs");
     seedFixtureDb(dbPath);
@@ -787,7 +808,7 @@ describe("GET /api/sessions/:id/system-prompt", () => {
         ]),
       }),
     );
-    const app = createApp({ sessionStoreDbPath: dbPath, debugLogsDirPaths: [debugLogsDirPath] });
+    const app = createApp({ appSettingsDir, sessionStoreDbPath: dbPath, debugLogsDirPaths: [debugLogsDirPath] });
 
     const response = await request(app).get("/api/sessions/session-1/system-prompt");
 
@@ -803,7 +824,7 @@ describe("GET /api/sessions/:id/system-prompt", () => {
       path.join(sessionLogDir, "main.jsonl"),
       `${JSON.stringify({ v: 1, ts: 1, dur: 0, sid: "session-1", type: "session_start", name: "session_start", spanId: "a", status: "ok", attrs: {} })}\n`,
     );
-    const app = createApp({ sessionStoreDbPath: dbPath, debugLogsDirPaths: [debugLogsDirPath] });
+    const app = createApp({ appSettingsDir, sessionStoreDbPath: dbPath, debugLogsDirPaths: [debugLogsDirPath] });
 
     const response = await request(app).get("/api/sessions/session-1/system-prompt");
 
@@ -811,7 +832,7 @@ describe("GET /api/sessions/:id/system-prompt", () => {
   });
 
   it("returns 404 for an unknown session id", async () => {
-    const app = createApp({ sessionStoreDbPath: dbPath, debugLogsDirPaths: [debugLogsDirPath] });
+    const app = createApp({ appSettingsDir, sessionStoreDbPath: dbPath, debugLogsDirPaths: [debugLogsDirPath] });
 
     const response = await request(app).get("/api/sessions/does-not-exist/system-prompt");
 
