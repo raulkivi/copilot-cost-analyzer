@@ -171,6 +171,9 @@ describe("PromptCompositionIcicle", () => {
     );
 
     const item = screen.getByTestId(`icicle-node-${securityRequirements.id}`);
-    expect(item).toHaveStyle({ borderWidth: "2px", borderColor: "var(--color-text)" });
+    // Inline style, not toHaveStyle: jsdom 30 resolves var() in computed
+    // styles, and the test environment defines no theme variables.
+    expect(item.style.borderWidth).toBe("2px");
+    expect(item.style.borderColor).toBe("var(--color-text)");
   });
 });
