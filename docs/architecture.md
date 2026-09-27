@@ -216,11 +216,30 @@ interface TurnUsage {
 }
 
 interface ToolCallRecord {
+  id?: string; // Analyze mode only — tool_use id / toolCallId
   name: string;
-  argsSummary: string;
+  kind?: "shell" | "file-read" | "file-write" | "search" | "web" | "mcp" | "subagent" | "other";
+  argsSummary: string; // bounded (≤ 300 chars) and redacted — never a Write's whole file content
+  shell?: { command: string; program?: string; cwd?: string };
+  outcome?: ToolCallOutcome; // Phase 9.10 tool-call audit
+  startedAt?: string;
+  durationMs?: number;
+  roundIndex?: number; // which LLM round in the turn issued it
   filesTouched?: string[]; // Analyze mode only
   tokenCount?: TokenCount; // Analyze mode only
 }
+
+// Phase 9.10 (plans/tool-call-audit.md). "unknown" requires a reason
+// (constraint 6); only error/interrupted/denied carry a failureCategory.
+interface ToolCallOutcome {
+  status: "success" | "error" | "interrupted" | "denied" | "unknown";
+  reason?: string;
+  exitCode?: number; // only when the source states it explicitly
+  failureCategory?: FailureCategory; // command-not-found, wrong-directory, invalid-arguments, dependency-missing, git-state, …
+  classificationEvidence?: { ruleId: string; excerpt: string /* ≤ 200 chars, redacted */ };
+}
+// SessionAudit / AuditRollup (packages/domain/src/session-audit.ts) are
+// server-computed aggregates over these records — see §8's audit endpoints.
 
 interface Turn {
   index: number;
@@ -1282,6 +1301,17 @@ size threshold. Subagent transcripts (a session's sibling
 (`projectsDir/<encoded-cwd>/<session-id>.jsonl`) and never recurses into
 that sibling directory, excluding them structurally rather than by
 filename convention.
+
+**Tool-call outcomes (Phase 9.10).** Confirmed against a real capture
+(`fixtures/claude-code-audit/`): a failed call's `tool_result` has
+`is_error: true` and content starting `Exit code N\n`; a harness timeout is
+`Exit code 143\nCommand timed out after …`; a success's `toolUseResult` is
+`{ stdout, stderr, interrupted, … }`. With N **parallel** tool calls, each
+`tool_result` entry is parented to its own `tool_use` entry, so N-1 results
+sit *off* the `last-prompt` branch — `tool-result-index.ts` therefore pairs
+results by `tool_use_id` across the whole file (the turn inspector uses the
+same file-wide search). `tool-call-extractor.ts` turns each pair into a
+classified `ToolCallRecord` via the shared `services/tool-audit/*` helpers.
 
 ### 6.3 Startup configuration check
 

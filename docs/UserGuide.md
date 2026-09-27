@@ -280,6 +280,67 @@ For Analyze mode, this normally means you haven't run a Copilot Chat
 session yet, or the app can't find your VS Code session store — reload
 the page after starting a chat session in VS Code.
 
+### Auditing tool calls
+
+Analyze mode's center column has a **Turns / Tool audit / All sessions**
+switch. It shows what the agent actually ran and why calls failed: a
+missing utility, a wrong working directory, bad arguments, a missing
+dependency, git state, a blocked permission, and so on. Every
+classification shows the rule that matched and a short, redacted excerpt
+of the real error as evidence.
+
+**Tool audit** audits the selected session:
+
+- **Stat tiles.** Tool calls, failure rate (computed only over calls whose
+  outcome is known), shell commands, retried commands, recovery rounds, and
+  output tokens spent in turns that had a failure.
+- **Outcomes per turn.** Stacked columns per turn. Hover or focus a column
+  for its counts, and click a column to select that turn. **Show table**
+  shows the same numbers as a table.
+- **Why calls failed** and **Shell programs.** Ranked bars. Click a bar to
+  filter the call table below; click it again to clear the filter.
+- **Tool calls table.** Filter chips by outcome, plus the command, outcome,
+  exit code, and evidence for each call. **Inspect** opens the turn
+  inspector.
+- **Retried commands.** The same command re-run after it failed.
+
+![Tool audit for one session](images/audit-session.png)
+
+**All sessions** rolls the audit up over the last 7, 30, or 90 days (or
+all time). It shows failures per day, top failing commands with how many
+sessions they failed in, and a sessions table. Click a session to open its
+own audit.
+
+![Tool-call audit across sessions](images/audit-all-sessions.png)
+
+Outcome data depends on the log provider. Claude Code CLI sessions record
+it in full. pi records it when its `isError` flag is present. VS Code's
+debug log doesn't record whether a call succeeded, so those calls show as
+**Unknown**, with the reason spelled out, rather than counting as zero
+failures.
+
+### Querying the audit from Claude Code (MCP)
+
+The same audit is available as a local, read-only MCP server, so you can
+ask an agent about your own sessions ("which commands failed most this
+week, and why?"). Run `npm install` in this repo, then register the server:
+
+```bash
+claude mcp add copilot-cost-analyzer -- /absolute/path/to/copilot-cost-analyzer/scripts/mcp-server.sh
+```
+
+| Tool | What it returns |
+|---|---|
+| `list_log_providers` | Available log sources and which one is active |
+| `list_sessions` | Sessions, most recent first, optionally within a date window |
+| `get_session_audit` | One session's audit. Set `includeCalls` to also get every classified call |
+| `list_tool_calls` | One session's calls, filtered by status, failure category, tool, program, or turn |
+| `get_audit_rollup` | Cross-session totals, top failing commands, and per-day counts |
+
+The `audit_session` prompt asks the model to explain a session's failures
+and suggest fixes. Every tool takes an optional `provider` (for example
+`"claude-code"`). The server reads local logs only and writes nothing.
+
 ## License
 
 [MIT](../LICENSE)

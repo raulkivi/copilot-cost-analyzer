@@ -1,6 +1,7 @@
 # Tool-call audit: outcomes, failure classification, and per-session audit reports
 
-Status: **approved — in progress (Phase 9.10).** The user's decisions on the
+Status: **complete (Phase 9.10)** — see §12 for what shipped and known
+limitations. Originally: The user's decisions on the
 open questions are recorded in §9. The user also asked for an **MCP
 interface** (§10) and **strong UX with data visualization** (§11).
 
@@ -408,3 +409,36 @@ empty/unknown state (constraint 6).
 - **Cross-session view.** Header "Audit" toggle (Analyze mode only). It
   shows the rollup: failure rate per day as a line, top failing programs,
   and a category mix.
+
+## 12. What shipped, and known limitations
+
+Shipped:
+
+- Domain schemas for outcomes, sessions, and rollups.
+- Pure `services/tool-audit/*` helpers.
+- Claude Code outcomes, with whole-file result pairing that also fixes the
+  inspector.
+- pi `isError` outcomes.
+- The VS Code per-invocation count fix.
+- Three HTTP endpoints, the stdio MCP server, and the web Audit views.
+- A `blocked-by-policy` category, added after a live session showed
+  harness safety-check blocks.
+
+Rendering the UI against a live session also surfaced a rollup refetch
+loop, which is fixed and has a regression test.
+
+Known limitations, each deliberately not guessed at:
+
+- **Program attribution in chains.** `a && b && c` is attributed to the
+  first non-`cd` program. If a later program in the chain failed, the
+  category is still right (it comes from the error text), but the program
+  may not be.
+- **Retries.** Only an exact, whitespace-normalized re-run counts as a
+  retry. A tweaked re-run, such as a corrected flag, is not matched.
+- **VS Code outcomes** stay `unknown` until a real failing `tool_call` span
+  is captured and its status value is confirmed.
+- **mitmproxy** tool calls (F6) are not decoded yet.
+- **Recovery cost** is reported as recovery rounds plus the exact tokens of
+  affected turns. Per-round token usage isn't part of the normalized
+  `Session`, so it is not estimated.
+
