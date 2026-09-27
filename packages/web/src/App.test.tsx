@@ -1,8 +1,9 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ConfigStatus } from "@copilot-cost-analyzer/domain";
 import { App } from "./App.js";
 import { makeTurn } from "./test-support/turn-fixture.js";
+import { makeAuditRollup, makeSessionAudit } from "./test-support/audit-fixture.js";
 
 const scenario = {
   id: "cache-basics",
@@ -150,6 +151,15 @@ function fakeFetch(url: string, init?: { method?: string; body?: string }) {
   }
   if (url === "/api/sessions/session-error") {
     return Promise.resolve({ ok: false, status: 500, json: () => Promise.resolve({ error: "boom" }) });
+  }
+  if (url === "/api/sessions/session-1/audit") {
+    return Promise.resolve({ ok: true, json: () => Promise.resolve(makeSessionAudit({ sessionId: "session-1" })) });
+  }
+  if (url.startsWith("/api/audit")) {
+    const rollup = makeAuditRollup({
+      sessions: [{ sessionId: "session-1", title: "Fix the bug", toolCalls: 4, failed: 3, unknown: 0 }],
+    });
+    return Promise.resolve({ ok: true, json: () => Promise.resolve(rollup) });
   }
   if (url === "/api/config/status") {
     return Promise.resolve({ ok: true, json: () => Promise.resolve(configStatus) });
@@ -522,5 +532,66 @@ describe("App", () => {
 
     await screen.findByRole("button", { name: "Fix the bug" });
     expect(screen.queryByText(/selected for advice/)).not.toBeInTheDocument();
+  });
+
+  describe("tool-call audit views (Phase 9.10)", () => {
+    it("offers the audit view switch only in Analyze mode", async () => {
+      render(<App />);
+      await screen.findByRole("button", { name: "Cache Basics" });
+      expect(screen.queryByLabelText("Tool audit")).not.toBeInTheDocument();
+
+      switchToAnalyze();
+
+      expect(screen.getByLabelText("Turns")).toBeChecked();
+      expect(screen.getByLabelText("Tool audit")).toBeInTheDocument();
+      expect(screen.getByLabelText("All sessions")).toBeInTheDocument();
+    });
+
+    it("shows the selected session's tool-call audit", async () => {
+      render(<App />);
+      switchToAnalyze();
+      fireEvent.click(await screen.findByRole("button", { name: "Fix the bug" }));
+      await screen.findByText("analyze turn explanation");
+
+      fireEvent.click(screen.getByLabelText("Tool audit"));
+
+      expect(await screen.findByRole("group", { name: "Failure rate" })).toHaveTextContent("75%");
+      expect(fetch).toHaveBeenCalledWith("/api/sessions/session-1/audit");
+    });
+
+    it("asks for a session before showing a session audit", async () => {
+      render(<App />);
+      switchToAnalyze();
+      await screen.findByRole("button", { name: "Fix the bug" });
+
+      fireEvent.click(screen.getByLabelText("Tool audit"));
+
+      expect(screen.getByText("Select a session to audit its tool calls.")).toBeInTheDocument();
+    });
+
+    it("shows the cross-session audit and opens a session from it into its own audit", async () => {
+      render(<App />);
+      switchToAnalyze();
+      await screen.findByRole("button", { name: "Fix the bug" });
+
+      fireEvent.click(screen.getByLabelText("All sessions"));
+      const sessionsTable = await screen.findByRole("table", { name: "Sessions" });
+      fireEvent.click(within(sessionsTable).getByRole("button", { name: "Fix the bug" }));
+
+      expect(await screen.findByRole("group", { name: "Failure rate" })).toHaveTextContent("75%");
+      expect(screen.getByLabelText("Tool audit")).toBeChecked();
+    });
+
+    it("resets to the turns view when switching modes", async () => {
+      render(<App />);
+      switchToAnalyze();
+      await screen.findByRole("button", { name: "Fix the bug" });
+      fireEvent.click(screen.getByLabelText("All sessions"));
+
+      fireEvent.click(screen.getByLabelText("Learn"));
+      switchToAnalyze();
+
+      expect(screen.getByLabelText("Turns")).toBeChecked();
+    });
   });
 });

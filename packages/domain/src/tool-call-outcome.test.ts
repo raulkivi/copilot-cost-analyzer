@@ -17,6 +17,7 @@ describe("failureCategorySchema", () => {
       "invalid-arguments",
       "dependency-missing",
       "git-state",
+      "blocked-by-policy",
       "unclassified",
     ]) {
       expect(failureCategorySchema.parse(category)).toBe(category);

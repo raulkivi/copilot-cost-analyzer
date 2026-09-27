@@ -54,8 +54,8 @@ describe("auditRollupSchema", () => {
       topFailingCommands: [
         { command: "foo --version", program: "foo", failures: 2, sessions: 1, failureCategory: "command-not-found" },
       ],
-      daily: [{ date: "2026-09-27", toolCalls: 3, failed: 2 }],
-      sessions: [{ sessionId: "s1", title: "t", startedAt: "2026-09-27T12:00:00Z", toolCalls: 3, failed: 2 }],
+      daily: [{ date: "2026-09-27", toolCalls: 3, succeeded: 1, failed: 1, interrupted: 1, denied: 0, unknown: 0 }],
+      sessions: [{ sessionId: "s1", title: "t", startedAt: "2026-09-27T12:00:00Z", toolCalls: 3, failed: 2, unknown: 0 }],
       outcomeCoverage: { known: 3, unknown: 0, unknownReasons: [] },
     };
     expect(auditRollupSchema.parse(rollup)).toEqual(rollup);

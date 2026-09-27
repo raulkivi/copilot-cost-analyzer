@@ -48,6 +48,8 @@ describe("classifyFailure (other shells and tools)", () => {
     ["error: the following arguments are required: path", "invalid-arguments"],
     ["<tool_use_error>InputValidationError: Bash failed due to the following issue:\nThe required parameter `command` is missing</tool_use_error>", "tool-input-invalid"],
     ["The user doesn't want to proceed with this tool use. The tool use was rejected", "user-rejected"],
+    // Real harness safety-check block captured in this repo's own session.
+    ["Permission for this command was denied by a built-in Claude Code safety check, not by the user. The check stops removals that can delete far more than intended.", "blocked-by-policy"],
     ["Tests  2 failed | 48 passed (50)", "test-or-build-failure"],
     ["src/a.ts(3,1): error TS2304: Cannot find name 'x'.", "test-or-build-failure"],
     // Real ESLint summary line captured in this repo's own Claude Code session.

@@ -62,7 +62,8 @@ function textOf(content: unknown): string {
 const EXIT_CODE_PREFIX = /^Exit code (\d+)\r?\n?/;
 const TIMEOUT = /^Command timed out after/m;
 const INTERRUPTED = /^\[Request interrupted by user/m;
-const REJECTED = /user doesn't want to proceed|tool use was rejected|permission to use \S+ (?:with .* )?has been denied/i;
+const REJECTED =
+  /user doesn't want to proceed|tool use was rejected|permission to use \S+ (?:with .* )?has been denied|^Permission for this command was denied/im;
 
 export function interpretToolResult(ref: ClaudeCodeToolResultRef): InterpretedToolResult {
   const rawText = textOf(ref.block.content);

@@ -19,6 +19,12 @@ describe("parseShellCommand", () => {
     ["'my tool' --flag", "my tool"],
     ["  git   -C /tmp   status ", "git"],
     ["(cd sub && make)", "make"],
+    // Shell keywords are control flow, not programs (seen in real sessions).
+    ["for f in *.ts; do wc -l $f; done", "wc"],
+    ["until curl -sf localhost; do sleep 1; done", "curl"],
+    ["while true; do npm test; done", "true"],
+    ["if [ -f x ]; then make; fi", "["],
+    ["! grep -q foo x", "grep"],
   ])("finds the program of %j", (command, program) => {
     expect(parseShellCommand(command).program).toBe(program);
   });

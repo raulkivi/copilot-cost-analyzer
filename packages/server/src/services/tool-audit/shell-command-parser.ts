@@ -83,11 +83,22 @@ function splitSegments(tokens: string[]): string[][] {
   return segments.filter((segment) => segment.length > 0);
 }
 
+// Control-flow keywords. A `for`/`case` header or a closing keyword runs no
+// program itself; `while`/`until`/`if` (and `do`/`then`/…) prefix a command
+// that does.
+const HEADER_OR_CLOSING_KEYWORDS = new Set(["for", "case", "select", "done", "fi", "esac", "}", "in"]);
+const PREFIX_KEYWORDS = new Set(["while", "until", "if", "elif", "then", "do", "else", "!", "{"]);
+
 function programOfSegment(segment: string[]): string | undefined {
+  if (HEADER_OR_CLOSING_KEYWORDS.has(segment[0])) {
+    return undefined;
+  }
   let i = 0;
   while (i < segment.length) {
     const token = segment[i];
-    if (ENV_ASSIGNMENT.test(token)) {
+    if (PREFIX_KEYWORDS.has(token)) {
+      i += 1;
+    } else if (ENV_ASSIGNMENT.test(token)) {
       i += 1;
     } else if (WRAPPERS.has(token)) {
       i += 1;

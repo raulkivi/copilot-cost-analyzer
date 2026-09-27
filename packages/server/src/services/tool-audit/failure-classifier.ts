@@ -55,6 +55,7 @@ function exitCodeRule(code: number, category: FailureCategory): FailureRule {
 }
 
 export const defaultFailureRules: FailureRule[] = [
+  textRule("blocked-by-policy", /denied by a (?:built-in )?[\w ]*(?:safety check|permission rule|policy)|blocked by (?:policy|a hook)|not allowed by (?:your )?permission settings/i),
   textRule(
     "user-rejected",
     /user doesn't want to proceed|tool use was rejected|permission to use \S+ (?:with .* )?has been denied|user (?:denied|rejected)/i,

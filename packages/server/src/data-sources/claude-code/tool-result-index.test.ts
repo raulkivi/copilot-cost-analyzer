@@ -68,6 +68,11 @@ describe("interpretToolResult", () => {
     expect(interpretToolResult(indexToolResults([entry]).get("t")!).status).toBe("denied");
   });
 
+  it("treats a harness permission/safety-check block as denied (real capture)", () => {
+    const entry = resultEntry("t", { content: "Permission for this command was denied by a built-in Claude Code safety check, not by the user. The check stops removals that can delete far more than intended.", is_error: true });
+    expect(interpretToolResult(indexToolResults([entry]).get("t")!).status).toBe("denied");
+  });
+
   it("reads a non-shell error without an exit code", () => {
     const entry = resultEntry("t", { content: "File does not exist. Note: your current working directory is /x.", is_error: true });
     expect(interpretToolResult(indexToolResults([entry]).get("t")!)).toEqual({

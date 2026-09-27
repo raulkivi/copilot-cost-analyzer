@@ -63,8 +63,8 @@ describe("buildAuditRollup", () => {
 
   it("buckets calls per day", () => {
     expect(buildAuditRollup(audits, {}).daily).toEqual([
-      { date: "2026-09-26", toolCalls: 2, failed: 1 },
-      { date: "2026-09-27", toolCalls: 2, failed: 2 },
+      { date: "2026-09-26", toolCalls: 2, succeeded: 1, failed: 1, interrupted: 0, denied: 0, unknown: 0 },
+      { date: "2026-09-27", toolCalls: 2, succeeded: 0, failed: 2, interrupted: 0, denied: 0, unknown: 0 },
     ]);
   });
 
@@ -75,9 +75,9 @@ describe("buildAuditRollup", () => {
   });
 
   it("summarizes each session", () => {
-    expect(buildAuditRollup(audits, {}).sessions.map((s) => [s.sessionId, s.toolCalls, s.failed])).toEqual([
-      ["a", 2, 1],
-      ["b", 3, 2],
+    expect(buildAuditRollup(audits, {}).sessions.map((s) => [s.sessionId, s.toolCalls, s.failed, s.unknown])).toEqual([
+      ["a", 2, 1, 0],
+      ["b", 3, 2, 1],
     ]);
   });
 

@@ -1,5 +1,6 @@
-import type { AuditRollup, FailureCategory, SessionAudit } from "@copilot-cost-analyzer/domain";
+import type { AuditRollup, FailureCategory, OutcomeTotals, SessionAudit } from "@copilot-cost-analyzer/domain";
 import {
+  addToTotals,
   emptyTotals,
   failureRateOf,
   isFailedCall,
@@ -59,7 +60,7 @@ function topFailingCommands(audits: SessionAudit[], limit: number): AuditRollup[
 }
 
 function daily(audits: SessionAudit[]): AuditRollup["daily"] {
-  const byDate = new Map<string, { toolCalls: number; failed: number }>();
+  const byDate = new Map<string, OutcomeTotals>();
   for (const audit of audits) {
     for (const { call } of audit.calls) {
       const timestamp = call.startedAt ?? audit.startedAt;
@@ -67,9 +68,8 @@ function daily(audits: SessionAudit[]): AuditRollup["daily"] {
         continue;
       }
       const date = timestamp.slice(0, 10);
-      const row = byDate.get(date) ?? { toolCalls: 0, failed: 0 };
-      row.toolCalls += 1;
-      row.failed += isFailedCall(call) ? 1 : 0;
+      const row = byDate.get(date) ?? emptyTotals();
+      addToTotals(row, call);
       byDate.set(date, row);
     }
   }
@@ -115,6 +115,7 @@ export function buildAuditRollup(audits: SessionAudit[], options: RollupOptions)
       ...(audit.startedAt ? { startedAt: audit.startedAt } : {}),
       toolCalls: audit.totals.toolCalls,
       failed: audit.totals.failed + audit.totals.interrupted + audit.totals.denied,
+      unknown: audit.totals.unknown,
     })),
     outcomeCoverage: {
       known: totals.toolCalls - totals.unknown,

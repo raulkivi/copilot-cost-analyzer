@@ -101,14 +101,15 @@ export const auditRollupSchema = z.object({
       failureCategory: failureCategorySchema.optional(),
     }),
   ),
-  daily: z.array(z.object({ date: z.string(), toolCalls: z.number(), failed: z.number() })),
+  daily: z.array(outcomeTotalsSchema.extend({ date: z.string() })),
   sessions: z.array(
     z.object({
       sessionId: z.string(),
       title: z.string(),
       startedAt: z.string().optional(),
       toolCalls: z.number(),
-      failed: z.number(),
+      failed: z.number(), // error + interrupted + denied
+      unknown: z.number(),
     }),
   ),
   outcomeCoverage: outcomeCoverageSchema,

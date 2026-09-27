@@ -21,6 +21,7 @@ export const failureCategorySchema = z.enum([
   "git-state",
   "test-or-build-failure",
   "user-rejected",
+  "blocked-by-policy", // harness permission rule / safety check, not the user
   "other-nonzero-exit",
   "unclassified",
 ]);
