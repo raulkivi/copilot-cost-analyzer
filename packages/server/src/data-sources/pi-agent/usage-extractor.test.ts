@@ -28,6 +28,20 @@ function toolResultMessage(id: string, toolCallId: string, toolName: string, usa
   };
 }
 
+function bashResult(id: string, toolCallId: string, text: string, isError: boolean | undefined): PiRawEntry {
+  return {
+    type: "message",
+    id,
+    message: {
+      role: "toolResult",
+      toolCallId,
+      toolName: "bash",
+      content: [{ type: "text", text }],
+      ...(isError !== undefined ? { isError } : {}),
+    },
+  };
+}
+
 function group(entries: PiRawEntry[]): PiTurnGroup {
   return { userMessageEntry: entries[0], entries };
 }
@@ -113,5 +127,37 @@ describe("extractToolCalls", () => {
 
   it("returns an empty array when the turn made no tool calls", () => {
     expect(extractToolCalls(group([userMessage("u1")]))).toEqual([]);
+  });
+
+  it("reads pi's isError flag into a classified outcome with the shell program", () => {
+    const g = group([
+      userMessage("u1"),
+      assistantMessage("a1", undefined, "claude-x", [
+        { type: "toolCall", id: "c1", name: "bash", args: { command: "cd pkg && npm test" } },
+        { type: "toolCall", id: "c2", name: "bash", args: { command: "ls" } },
+      ]),
+      bashResult("t1", "c1", "bash: cd: pkg: No such file or directory", true),
+      bashResult("t2", "c2", "a.ts", false),
+    ]);
+
+    const [failed, ok] = extractToolCalls(g);
+
+    expect(failed).toMatchObject({
+      id: "c1",
+      kind: "shell",
+      argsSummary: "cd pkg && npm test",
+      shell: { command: "cd pkg && npm test", program: "npm" },
+      outcome: { status: "error", failureCategory: "wrong-directory" },
+    });
+    expect(ok.outcome).toEqual({ status: "success" });
+  });
+
+  it("reports an unknown outcome, with a reason, when isError is absent", () => {
+    const g = group([userMessage("u1"), bashResult("t1", "c1", "x", undefined)]);
+
+    const [call] = extractToolCalls(g);
+
+    expect(call.outcome?.status).toBe("unknown");
+    expect(call.outcome?.reason).toMatch(/isError/);
   });
 });
