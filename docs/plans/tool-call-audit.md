@@ -1,7 +1,8 @@
 # Tool-call audit: outcomes, failure classification, and per-session audit reports
 
-Status: **proposal — not started.** It needs the user's decisions on the open
-questions in §9 before any code is written.
+Status: **approved — in progress (Phase 9.10).** The user's decisions on the
+open questions are recorded in §9. The user also asked for an **MCP
+interface** (§10) and **strong UX with data visualization** (§11).
 
 ## 1. Context
 
@@ -80,6 +81,8 @@ export const failureCategorySchema = z.enum([
   "permission-denied",   // exit 126, EACCES, "Permission denied" (OS level, distinct from status "denied")
   "timeout",
   "network",             // could not resolve host, connection refused, proxy 403
+  "dependency-missing",  // Python "No module named", Node "Cannot find module", missing lib
+  "git-state",           // "not a git repository", merge conflict, detached HEAD, non-fast-forward
   "test-or-build-failure", // command ran correctly but reported failures (npm test exit 1 with test output)
   "other-nonzero-exit",
   "unclassified",        // failed, but no rule matched: never guessed
@@ -300,16 +303,108 @@ per-category counts, each with evidence. The Audit tab renders them. A VS
 Code session without content capture reports its outcome coverage as
 unknown with a reason, never zero failures.
 
-## 9. Open questions (need the user's decision)
+## 9. Decisions (answered by the user, 2026-09-27)
 
-1. **Scope**: is audit a first-class Analyze-mode feature (update `vision.md`
-   non-goals), or a separate "Audit" mode?
-2. **Cross-session rollups** (`GET /api/audit`, "top failing commands this
-   week"): include them in 9.10, or in a follow-up?
-3. **Category set**: is the list in §4 right? Candidates to add:
-   `dependency-missing` (Python `No module named`, Node `Cannot find
-   module`) and `git-state` (merge conflict, detached HEAD).
-4. **Excerpt retention**: store redacted stderr excerpts (≤ 200 chars) in the
-   API response, or only category, ruleId, and exit code (maximum privacy)?
-5. **Provider order**: start with Claude Code (best data), or VS Code (the
-   product's primary target, but weakest outcome data)?
+1. **Scope**: audit is a first-class **Analyze-mode** feature. `vision.md`
+   §6 is updated to say so.
+2. **Cross-session rollups** are **in scope** for 9.10:
+   `GET /api/audit` plus the MCP `get_audit_rollup` tool.
+3. **Categories**: add `dependency-missing` and `git-state` to §4's list.
+4. **Excerpts**: keep **redacted stderr excerpts** (≤ 200 chars) *and* the
+   structured classification, so the UI and MCP clients can filter by
+   category, status, tool, or program without text search. The advice
+   bundle still gets counts only.
+5. **Provider order**: **Claude Code first.** Then pi (`isError`), then VS
+   Code (count fix now; status once a real failing span is captured), then
+   mitmproxy.
+
+### 9.1 Real-capture findings (Claude Code v2.1.x, captured 2026-09-27)
+
+The new fixture `packages/server/fixtures/claude-code-audit/` comes from a
+real session in which each failure category was triggered deliberately. It
+confirmed:
+
+- **Failure shape.** `tool_result.is_error: true`. `content` starts with
+  `Exit code N\n`, followed by the combined stderr/stdout. `toolUseResult`
+  is a **string** `"Error: Exit code N\n…"`.
+- **Success shape.** `toolUseResult` is `{ stdout, stderr, interrupted,
+  isImage, noOutputExpected }`.
+- **Non-shell tool failures.** For example, Read on a missing file gives
+  `is_error: true` with `"File does not exist. …"` and no exit code.
+- **Harness timeout.** `Exit code 143\nCommand timed out after 2s`. This is
+  classified as `status: "interrupted"`, category `timeout`.
+- **Observed exit codes:** 127 (command not found), 126 (permission
+  denied), 2 (bad option), 128 (git: not a repository), 6 (curl DNS
+  failure), 1 (bad `cd`, Python `ModuleNotFoundError`, Node module).
+- **Parallel tool calls change the tree shape.** When one assistant message
+  carries N parallel `tool_use` blocks, each `tool_result` entry is
+  parented to *its own* `tool_use` entry. Only the last result continues
+  the chain. So **N-1 results are not on the `last-prompt` branch**, and
+  `walkBranch` drops them.
+  - Audit extraction must therefore pair results by `tool_use_id` across
+    the **whole file**, not just the active branch.
+  - The same gap affects the existing Turn Inspector's `result` parts. It
+    is fixed by the same file-wide result index.
+
+## 10. MCP interface
+
+Users attach the analyzer to Claude Code (or any MCP-capable harness) and
+query their own audit data conversationally, for example "which commands
+failed most this week and why?"
+
+- **Transport**: stdio, via `@modelcontextprotocol/sdk` (supports zod v4).
+  Local-only, with no network listener, which is consistent with
+  constraint 1 and §11.2.
+- **Entry point**: `npm run mcp` runs `packages/server/src/mcp/stdio.ts`.
+  To register it with Claude Code:
+  `claude mcp add copilot-cost-analyzer -- npm run mcp --prefix <repo> --silent`.
+- **Composition**: provider registry construction moves out of `createApp`
+  into `composition/create-log-provider-registry.ts`, so the HTTP app and
+  the MCP server share one wiring (SRP/DIP). Both depend on one
+  `AuditQueryService`, which operates on normalized `Session`s and is
+  therefore provider-agnostic.
+- **Tools.** All are read-only and annotated `readOnlyHint: true`, and all
+  return JSON text plus `structuredContent`:
+
+  | Tool | Input | Returns |
+  |---|---|---|
+  | `list_log_providers` | none | providers, availability, and active id |
+  | `list_sessions` | `provider?`, `since?`, `until?`, `limit?` | session summaries (id, title, startedAt, turnCount) |
+  | `get_session_audit` | `sessionId`, `provider?` | `SessionAudit` |
+  | `list_tool_calls` | `sessionId`, `status?`, `failureCategory?`, `tool?`, `program?`, `limit?` | filtered, classified tool calls with excerpts and turn indexes |
+  | `get_audit_rollup` | `provider?`, `since?`, `until?`, `limit?` | cross-session `AuditRollup` (totals, top failing commands and programs, categories over time) |
+
+- **Prompt.** `audit_session` is a canned prompt that asks the model to
+  explain one session's failures and suggest fixes, for example "install
+  X", "run from the package directory", or "use flag Y".
+
+## 11. Visualization and UX
+
+Charts are built with **D3**, which is already a dependency (constraint:
+no new chart library), in `packages/web/src/charts/`. They use the
+Industry theme tokens. Every chart has a text or table equivalent and an
+empty/unknown state (constraint 6).
+
+- **Audit tab, top row: KPI tiles.** Tool calls, failure rate, shell calls,
+  retries, recovery tokens, and outcome coverage. Failure rate uses the
+  error tone only when it is above 0.
+- **`ToolOutcomeTimeline`.** One column per turn, with stacked counts of
+  succeeded, failed, interrupted, denied, and unknown calls. Clicking a
+  column selects that turn in the turns table, so the audit links back to
+  cost.
+- **`FailureCategoryBars`.** Horizontal bars, sorted by count. Clicking a
+  bar applies the category as a filter.
+- **`ProgramBars`.** Horizontal bars per shell program, showing succeeded
+  versus failed.
+- **Failures table.** Filter chips for status, category, tool, and program.
+  Each row shows turn, tool, the command in monospace, a category tag, the
+  exit code, and a redacted excerpt. Clicking a row opens the Turn
+  Inspector.
+- **Retry groups** list: command, attempts, and whether it eventually
+  succeeded.
+- **Turns table.** A "Tools" cell shows `n` plus a red `✗k` badge when any
+  call in that turn failed.
+- **ExplanationPanel.** A status tag on each tool call.
+- **Cross-session view.** Header "Audit" toggle (Analyze mode only). It
+  shows the rollup: failure rate per day as a line, top failing programs,
+  and a category mix.

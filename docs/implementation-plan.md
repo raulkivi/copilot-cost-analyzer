@@ -1097,6 +1097,38 @@ turn's own `userMessageEntry.parentUuid` (architecture.md §6.2.6) avoids
 this without weakening genuine fork detection. All new server tests pass
 alongside the full existing suite; `tsc --noEmit` is clean.
 
+## Phase 9.10 — Tool-call audit, MCP interface, audit visualizations
+
+Full design: [plans/tool-call-audit.md](plans/tool-call-audit.md).
+
+- Domain: `ToolCallRecord` gains optional `id`/`kind`/`shell`/`outcome`
+  (status, exit code, failure category, classification evidence with a
+  redacted ≤200-char excerpt)/timing/`roundIndex`; new `SessionAudit` and
+  `AuditRollup` shapes.
+- Server: pure `services/tool-audit/*` (shell-command parser, tool-kind
+  resolver, output redactor, rule-based failure classifier,
+  session-audit/rollup builders); Claude Code provider fills outcomes,
+  pairing `tool_result`s by id across the whole file (parallel tool calls
+  put N-1 results off the active branch); bounded `argsSummary`;
+  `GET /api/sessions/:id/audit` and `GET /api/audit`.
+- MCP: stdio server (`npm run mcp`) exposing read-only audit tools over the
+  same `AuditQueryService`.
+- Web: Audit tab (KPI tiles, per-turn outcome timeline, failure-category
+  and program bar charts, filterable failures table, retry groups),
+  failure badge in the turns table, status tags in the explanation panel,
+  cross-session Audit view.
+- Also: VS Code per-turn tool-call count fix (no more name dedupe); pi
+  `isError` outcome.
+
+**Exit criterion**: for the real-capture-derived Claude Code fixture,
+`GET /api/sessions/:id/audit` and the MCP `get_session_audit` tool report
+the correct total/failed/per-category counts, each with evidence; the Audit
+tab renders them; a provider without outcome data reports coverage as
+unknown with a reason, never "0 failures".
+
+**Dependencies**: Phase 9.5 (inspector pairing), Phase 9.9 (Claude Code
+provider).
+
 ## Phase 10 — VS Code extension packaging (future, out of MVP scope)
 
 Not part of the initial build (vision §5 "future path"); tracked here only
@@ -1134,6 +1166,7 @@ flowchart LR
     P97 --> P98["Phase 9.8<br/>Consume pi-system-prompt-logger sidecar"]
     P9 --> P99["Phase 9.9<br/>Claude Code CLI provider"]
     P95 --> P99
+    P99 --> P910["Phase 9.10<br/>Tool-call audit + MCP"]
     P95 --> P10["Phase 10<br/>VS Code extension (future)"]
     P5 --> P10
 ```
