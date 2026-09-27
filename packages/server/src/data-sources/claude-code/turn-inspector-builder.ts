@@ -88,7 +88,15 @@ function resultContentOf(resultEntry: ClaudeCodeRawEntry | undefined, toolUseId:
 // since Claude Code's real user entry carries the text directly (unlike
 // pi's incremental-but-still-per-entry format, this needed no extra
 // justification once the field existed to fill).
-export function buildTurnInspectorDetail(turnIndex: number, group: ClaudeCodeTurnGroup): TurnInspectorDetail {
+// `resultSearchEntries` should be the whole session file: parallel tool
+// calls leave N-1 of their tool_result entries off the active branch
+// (tool-result-index.ts), so searching only the turn's branch entries would
+// show those results as empty.
+export function buildTurnInspectorDetail(
+  turnIndex: number,
+  group: ClaudeCodeTurnGroup,
+  resultSearchEntries: ClaudeCodeRawEntry[] = group.entries,
+): TurnInspectorDetail {
   const userMessage = buildUserMessageParts(group.userMessageEntry);
   const rounds = groupTurnEntriesByRound(group.entries);
 
@@ -115,7 +123,7 @@ export function buildTurnInspectorDetail(turnIndex: number, group: ClaudeCodeTur
 
     const toolCalls = toolUseBlocks.map((block) => {
       const toolUseId = typeof block.id === "string" ? block.id : undefined;
-      const resultEntry = toolUseId ? findToolResultFor(entries, toolUseId) : undefined;
+      const resultEntry = toolUseId ? findToolResultFor(resultSearchEntries, toolUseId) : undefined;
       return {
         name: typeof block.name === "string" ? block.name : "unknown",
         args: [buildContentPart(block.input ?? null)],

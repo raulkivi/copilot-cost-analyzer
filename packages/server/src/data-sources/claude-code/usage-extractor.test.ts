@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ClaudeCodeRawEntry } from "./claude-code-jsonl-reader.js";
 import type { ClaudeCodeTurnGroup } from "./turn-grouper.js";
-import { extractToolCalls, extractTurnUsage } from "./usage-extractor.js";
+import { extractTurnUsage } from "./usage-extractor.js";
 
 function userText(uuid: string, text = "hi"): ClaudeCodeRawEntry {
   return { type: "user", uuid, message: { role: "user", content: [{ type: "text", text }] } };
@@ -19,10 +19,6 @@ function assistantBlock(
   model = "claude-sonnet-5",
 ): ClaudeCodeRawEntry {
   return { type: "assistant", uuid, message: { id: messageId, role: "assistant", model, content: [block], usage } };
-}
-
-function toolResult(uuid: string, toolUseId: string, content: unknown = "ok"): ClaudeCodeRawEntry {
-  return { type: "user", uuid, message: { role: "user", content: [{ type: "tool_result", tool_use_id: toolUseId, content }] } };
 }
 
 function group(entries: ClaudeCodeRawEntry[]): ClaudeCodeTurnGroup {
@@ -92,37 +88,5 @@ describe("extractTurnUsage", () => {
     expect(result.costAiCredits.known).toBe(false);
     expect(result.tool.known).toBe(false);
     expect(result.vision.known).toBe(false);
-  });
-});
-
-describe("extractToolCalls", () => {
-  it("builds one ToolCallRecord per tool_use content block, reading name/input directly off the block", () => {
-    const g = group([
-      userText("u1"),
-      assistantBlock("a1", "m1", { type: "tool_use", id: "call-1", name: "Read", input: { file_path: "/a.ts" } }),
-      toolResult("tr1", "call-1", "file contents"),
-    ]);
-
-    const toolCalls = extractToolCalls(g);
-
-    expect(toolCalls).toHaveLength(1);
-    expect(toolCalls[0].name).toBe("Read");
-    expect(toolCalls[0].argsSummary).toContain("/a.ts");
-  });
-
-  it("returns one record per tool_use block even under parallel tool calls interleaved with results", () => {
-    const g = group([
-      userText("u1"),
-      assistantBlock("a1", "m1", { type: "tool_use", id: "call-1", name: "Bash", input: { command: "ls" } }),
-      toolResult("tr1", "call-1"),
-      assistantBlock("a2", "m1", { type: "tool_use", id: "call-2", name: "Bash", input: { command: "pwd" } }),
-      toolResult("tr2", "call-2"),
-    ]);
-
-    expect(extractToolCalls(g).map((t) => t.name)).toEqual(["Bash", "Bash"]);
-  });
-
-  it("returns an empty array when the turn made no tool calls", () => {
-    expect(extractToolCalls(group([userText("u1")]))).toEqual([]);
   });
 });
