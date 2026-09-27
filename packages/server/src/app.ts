@@ -10,32 +10,17 @@ import {
   classifyEnvelopesAvailability,
   readMainJsonlFile,
 } from "./data-sources/jsonl/main-jsonl-reader.js";
-import {
-  listWorkspaceDebugLogsDirPaths,
-} from "./data-sources/jsonl/session-log-path.js";
 import { getSessionRow, openReadOnlyDb } from "./data-sources/sqlite/session-store.js";
-import { resolveSessionStoreDbPath } from "./data-sources/sqlite/session-store-path.js";
-import { resolveAgentTracesDbPath } from "./data-sources/agent-traces/agent-traces-db-path.js";
-import { resolveVscodeSettingsPath } from "./data-sources/vscode-settings/vscode-settings-path.js";
 import { resolveSystemPromptText } from "./services/session-enricher/analyze-mode-extras.js";
 import { checkConfig } from "./services/config-check/config-check.js";
 import {
   readMinRetainedSessionLogsThreshold,
   writeMinRetainedSessionLogsThreshold,
 } from "./data-sources/log-providers/app-settings.js";
-import { VscodeLogProvider } from "./data-sources/log-providers/vscode/vscode-log-provider.js";
-import { MitmproxyLogProvider } from "./data-sources/log-providers/mitmproxy/mitmproxy-log-provider.js";
-import { defaultMitmExchangeDecoders } from "./data-sources/log-providers/mitmproxy/decoders/default-decoders.js";
-import { resolveMitmproxyCapturesDir } from "./data-sources/log-providers/mitmproxy/resolve-mitmproxy-captures-dir.js";
-import { PiAgentLogProvider } from "./data-sources/pi-agent/pi-agent-log-provider.js";
-import { ClaudeCodeLogProvider } from "./data-sources/claude-code/claude-code-log-provider.js";
-import { resolveAppSettingsDir } from "./platform/app-settings-dir/resolve-app-settings-dir.js";
-import { migrateLegacyAppSettingsDir } from "./platform/app-settings-dir/migrate-legacy-app-settings-dir.js";
-import { resolvePiAgentSessionsDir } from "./platform/pi-agent-paths/resolve-pi-agent-sessions-dir.js";
-import { resolvePiSystemPromptLogPath } from "./platform/pi-agent-paths/resolve-pi-system-prompt-log-path.js";
-import { resolveClaudeCodeProjectsDir } from "./platform/claude-code-paths/resolve-claude-code-projects-dir.js";
-import { LogProviderRegistry, UnknownLogProviderIdError } from "./data-sources/log-providers/registry.js";
-import type { LogProvider } from "./data-sources/log-providers/log-provider.js";
+import { UnknownLogProviderIdError } from "./data-sources/log-providers/registry.js";
+import { composeLogProviders, type LogProviderCompositionOptions } from "./composition/compose-log-providers.js";
+import { AuditQueryService } from "./services/tool-audit/audit-query-service.js";
+import { parseSessionRangeQuery, parseToolCallFilterQuery } from "./services/tool-audit/audit-query-params.js";
 
 const APP_VERSION = (
   JSON.parse(
@@ -43,77 +28,19 @@ const APP_VERSION = (
   ) as { version: string }
 ).version;
 
-export interface CreateAppOptions {
-  sessionStoreDbPath?: string;
-  debugLogsDirPaths?: string[];
-  vscodeSettingsPath?: string | null;
-  agentTracesDbPath?: string | null;
-  appSettingsDir?: string;
-  mitmproxyCapturesDirPath?: string | null;
-  piAgentSessionsDirPath?: string | null;
-  systemPromptLogPath?: string | null;
-  claudeCodeProjectsDirPath?: string | null;
-  // Additional providers registered alongside vscode/mitmproxy/pi-agent/claude-code — exists so
-  // tests can prove the registry is open/closed (phase-9-log-providers-
-  // implementation.md §8 step 9) without any other file needing to change.
-  additionalLogProviders?: LogProvider[];
-}
+export type CreateAppOptions = LogProviderCompositionOptions;
 
 export function createApp(options: CreateAppOptions = {}): Express {
   const app = express();
-  const resolvedDbPath =
-    options.sessionStoreDbPath ?? resolveSessionStoreDbPath();
-  const resolvedDebugLogsDirPaths =
-    options.debugLogsDirPaths ?? listWorkspaceDebugLogsDirPaths();
-  const resolvedVscodeSettingsPath =
-    options.vscodeSettingsPath !== undefined
-      ? options.vscodeSettingsPath
-      : resolveVscodeSettingsPath();
-  const resolvedAgentTracesDbPath =
-    options.agentTracesDbPath !== undefined
-      ? options.agentTracesDbPath
-      : resolveAgentTracesDbPath();
-  if (!options.appSettingsDir) {
-    migrateLegacyAppSettingsDir();
-  }
-  const resolvedAppSettingsDir = options.appSettingsDir ?? resolveAppSettingsDir();
-  const resolvedMitmproxyCapturesDirPath =
-    options.mitmproxyCapturesDirPath !== undefined
-      ? options.mitmproxyCapturesDirPath
-      : resolveMitmproxyCapturesDir(resolvedAppSettingsDir);
-  const resolvedPiAgentSessionsDirPath =
-    options.piAgentSessionsDirPath !== undefined
-      ? options.piAgentSessionsDirPath
-      : resolvePiAgentSessionsDir();
-  const resolvedSystemPromptLogPath =
-    options.systemPromptLogPath !== undefined
-      ? options.systemPromptLogPath
-      : resolvePiSystemPromptLogPath();
-  const resolvedClaudeCodeProjectsDirPath =
-    options.claudeCodeProjectsDirPath !== undefined
-      ? options.claudeCodeProjectsDirPath
-      : resolveClaudeCodeProjectsDir();
-
-  const vscodeProvider = new VscodeLogProvider({
-    sessionStoreDbPath: resolvedDbPath,
-    debugLogsDirPaths: resolvedDebugLogsDirPaths,
-    agentTracesDbPath: resolvedAgentTracesDbPath,
-  });
-  const mitmproxyProvider = new MitmproxyLogProvider({
-    capturesDirPath: resolvedMitmproxyCapturesDirPath,
-    decoders: defaultMitmExchangeDecoders,
-  });
-  const piAgentProvider = new PiAgentLogProvider({
-    sessionsDirPath: resolvedPiAgentSessionsDirPath,
-    systemPromptLogPath: resolvedSystemPromptLogPath,
-  });
-  const claudeCodeProvider = new ClaudeCodeLogProvider({
-    projectsDirPath: resolvedClaudeCodeProjectsDirPath,
-  });
-  const registry = new LogProviderRegistry(
-    [vscodeProvider, mitmproxyProvider, piAgentProvider, claudeCodeProvider, ...(options.additionalLogProviders ?? [])],
+  const {
+    registry,
+    piAgentProvider,
+    resolvedDbPath,
+    resolvedDebugLogsDirPaths,
+    resolvedVscodeSettingsPath,
     resolvedAppSettingsDir,
-  );
+  } = composeLogProviders(options);
+  const auditQueries = new AuditQueryService(registry);
 
   // Used only by GET /api/sessions/:id/system-prompt below, which stays
   // wired directly to the VS Code session store/main.jsonl path rather than
@@ -211,6 +138,66 @@ export function createApp(options: CreateAppOptions = {}): Express {
       res.status(500).json({
         error: `Failed to load session "${req.params.id}": ${(error as Error).message}`,
       });
+    }
+  });
+
+  // Tool-call audit (Phase 9.10, docs/plans/tool-call-audit.md). All three
+  // read through AuditQueryService — the same service the MCP server uses —
+  // and accept an optional ?provider= to audit a provider other than the
+  // UI's active one.
+  function sendAuditError(res: express.Response, error: unknown, what: string): void {
+    if (error instanceof UnknownLogProviderIdError) {
+      res.status(400).json({ error: error.message });
+      return;
+    }
+    res.status(500).json({ error: `Failed to load ${what}: ${(error as Error).message}` });
+  }
+
+  function providerParam(query: Record<string, unknown>): string | undefined {
+    return typeof query.provider === "string" && query.provider.length > 0 ? query.provider : undefined;
+  }
+
+  app.get("/api/sessions/:id/audit", async (req, res) => {
+    try {
+      const audit = await auditQueries.getSessionAudit(req.params.id, providerParam(req.query));
+      if (!audit) {
+        res.status(404).json({ error: `Unknown session id "${req.params.id}"` });
+        return;
+      }
+      res.json(audit);
+    } catch (error) {
+      sendAuditError(res, error, `audit for session "${req.params.id}"`);
+    }
+  });
+
+  app.get("/api/sessions/:id/tool-calls", async (req, res) => {
+    const filter = parseToolCallFilterQuery(req.query);
+    if (!filter.ok) {
+      res.status(400).json({ error: filter.error });
+      return;
+    }
+    try {
+      const result = await auditQueries.listToolCalls(req.params.id, filter.value, providerParam(req.query));
+      if (!result) {
+        res.status(404).json({ error: `Unknown session id "${req.params.id}"` });
+        return;
+      }
+      res.json(result);
+    } catch (error) {
+      sendAuditError(res, error, `tool calls for session "${req.params.id}"`);
+    }
+  });
+
+  app.get("/api/audit", async (req, res) => {
+    const range = parseSessionRangeQuery(req.query);
+    if (!range.ok) {
+      res.status(400).json({ error: range.error });
+      return;
+    }
+    try {
+      res.json(await auditQueries.getRollup(range.value));
+    } catch (error) {
+      sendAuditError(res, error, "audit rollup");
     }
   });
 

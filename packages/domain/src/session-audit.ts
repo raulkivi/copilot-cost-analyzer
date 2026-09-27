@@ -67,7 +67,16 @@ export const sessionAuditSchema = z.object({
   perTurn: z.array(outcomeTotalsSchema.omit({ toolCalls: true }).extend({ turnIndex: z.number() })),
   calls: z.array(auditedToolCallSchema),
   retries: z.array(retryGroupSchema),
-  failureRecoveryCost: z.object({ rounds: z.number(), outputTokens: tokenCountSchema }),
+  // Each LLM round that contained a failed call forces at least one
+  // follow-up round spent reacting to it. Per-round tokens aren't part of
+  // the normalized Session, so cost is reported exactly for the *affected
+  // turns* rather than estimated per round (constraint 6).
+  failureRecoveryCost: z.object({
+    recoveryRounds: z.number(),
+    affectedTurns: z.array(z.number()),
+    affectedTurnsOutputTokens: tokenCountSchema,
+    affectedTurnsInputTokens: tokenCountSchema, // uncached + cache write + cache read
+  }),
   outcomeCoverage: outcomeCoverageSchema,
 });
 

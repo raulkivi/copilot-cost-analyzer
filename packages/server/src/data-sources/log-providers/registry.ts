@@ -45,6 +45,17 @@ export class LogProviderRegistry {
     return provider;
   }
 
+  // Looks up any registered provider by id — used by callers that name a
+  // provider explicitly (audit queries, the MCP server) rather than
+  // following the UI's active selection.
+  getProvider(providerId: string): LogProvider {
+    const provider = this.providers.get(providerId);
+    if (!provider) {
+      throw new UnknownLogProviderIdError(providerId);
+    }
+    return provider;
+  }
+
   setActive(providerId: string): void {
     if (!this.providers.has(providerId)) {
       throw new UnknownLogProviderIdError(providerId);

@@ -16,7 +16,12 @@ function sampleAudit() {
     perTurn: [{ turnIndex: 0, succeeded: 1, failed: 1, interrupted: 1, denied: 0, unknown: 0 }],
     calls: [{ turnIndex: 0, call: { name: "Bash", argsSummary: "npm test", outcome: { status: "success" } } }],
     retries: [{ command: "npm test", attempts: 2, eventuallySucceeded: true, turnIndexes: [0] }],
-    failureRecoveryCost: { rounds: 1, outputTokens: { known: true, value: 40 } },
+    failureRecoveryCost: {
+      recoveryRounds: 1,
+      affectedTurns: [0],
+      affectedTurnsOutputTokens: { known: true, value: 40 },
+      affectedTurnsInputTokens: { known: false, reason: "no usage" },
+    },
     outcomeCoverage: { known: 3, unknown: 0, unknownReasons: [] },
   };
 }
