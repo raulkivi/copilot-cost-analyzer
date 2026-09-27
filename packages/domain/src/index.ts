@@ -6,7 +6,39 @@ export {
   type TokenCount,
 } from "./token-count.js";
 export { turnUsageSchema, type TurnUsage } from "./turn-usage.js";
-export { toolCallRecordSchema, type ToolCallRecord } from "./tool-call-record.js";
+export {
+  toolCallRecordSchema,
+  toolKindSchema,
+  shellInvocationSchema,
+  type ToolCallRecord,
+  type ToolKind,
+  type ShellInvocation,
+} from "./tool-call-record.js";
+export {
+  toolCallStatusSchema,
+  failureCategorySchema,
+  classificationEvidenceSchema,
+  toolCallOutcomeSchema,
+  isFailedStatus,
+  MAX_EVIDENCE_EXCERPT_LENGTH,
+  type ToolCallStatus,
+  type FailureCategory,
+  type ClassificationEvidence,
+  type ToolCallOutcome,
+} from "./tool-call-outcome.js";
+export {
+  outcomeTotalsSchema,
+  outcomeCoverageSchema,
+  auditedToolCallSchema,
+  retryGroupSchema,
+  sessionAuditSchema,
+  auditRollupSchema,
+  type OutcomeTotals,
+  type AuditedToolCall,
+  type RetryGroup,
+  type SessionAudit,
+  type AuditRollup,
+} from "./session-audit.js";
 export { turnSchema, triggeredEventSchema, type Turn, type TriggeredEvent } from "./turn.js";
 export {
   systemPromptComponentSchema,
