@@ -100,7 +100,7 @@ export const defaultFailureRules: FailureRule[] = [
   exitCodeRule(2, "invalid-arguments"),
   textRule(
     "test-or-build-failure",
-    /\b\d+ (?:failed|failing)\b|Tests?:\s+\d+ failed|\bFAIL\b|error TS\d+|BUILD FAILED|compilation failed|AssertionError|npm ERR! Test failed|ELIFECYCLE|error\[E\d+\]/,
+    /\b\d+ (?:failed|failing)\b|Tests?:\s+\d+ failed|\bFAIL\b|error TS\d+|BUILD FAILED|compilation failed|AssertionError|npm ERR! Test failed|ELIFECYCLE|error\[E\d+\]|\d+ problems? \(\d+ errors?/,
   ),
   {
     id: "shell.nonzero-exit",

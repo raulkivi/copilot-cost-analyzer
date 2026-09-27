@@ -50,6 +50,8 @@ describe("classifyFailure (other shells and tools)", () => {
     ["The user doesn't want to proceed with this tool use. The tool use was rejected", "user-rejected"],
     ["Tests  2 failed | 48 passed (50)", "test-or-build-failure"],
     ["src/a.ts(3,1): error TS2304: Cannot find name 'x'.", "test-or-build-failure"],
+    // Real ESLint summary line captured in this repo's own Claude Code session.
+    ["✖ 1 problem (1 error, 0 warnings)", "test-or-build-failure"],
     ["ls: cannot access '/nope': No such file or directory", "file-not-found"],
     ["curl: (7) Failed to connect to localhost port 9 : Connection refused", "network"],
   ])("%j → %s", (text, category) => {
