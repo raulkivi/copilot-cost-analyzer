@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Community health files: `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, issue forms and a
+  pull request template.
+
+### Fixed
+- `SECURITY.md` linked private vulnerability reporting at the old
+  `gh-cp-chat-analyser` repository name.
+
 ### Security
 - `pi-system-prompt-logger` now builds against `@earendil-works/pi-coding-agent`
   0.87.1, the renamed Pi package, instead of the abandoned
