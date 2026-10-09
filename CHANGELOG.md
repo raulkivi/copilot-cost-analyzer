@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `gh-cp-chat-analyser` repository name.
 
 ### Security
+- Removed captured turn examples and local filesystem paths from `Design/`.
 - The API server now rejects (403) any request whose `Host` header isn't a
   loopback name (`localhost`, `127.0.0.1`, `[::1]`) on port 3001 or the Vite
   dev port 5173, closing a DNS-rebinding path by which a malicious web page
@@ -40,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   inside `@earendil-works/pi-coding-agent` 0.87.1, a dev-only types dependency
   of `pi-system-prompt-logger`; only Pi 1.x ships 5.0.12, a major bump that is
   tracked separately.
+- Captured headers whose names look like credentials (`*api-key`, `*secret`, `*-token`, `*-auth*`, `*security-token`) are stripped in addition to the fixed list. Rate-limit headers such as `x-ratelimit-limit-tokens` are kept.
 - `pi-system-prompt-logger` now builds against `@earendil-works/pi-coding-agent`
   0.87.1, the renamed Pi package, instead of the abandoned
   `@mariozechner/pi-coding-agent` 0.73.1. Closes the last 5 Dependabot alerts
