@@ -1081,8 +1081,8 @@ A third `LogProvider`, `PiAgentLogProvider`
 (`https://pi.dev/docs/latest/session-format`) directly:
 `~/.pi/agent/sessions/--<cwd-with-slashes-as-dashes>--/<timestamp>_<uuid>.jsonl`,
 one file per session. Unlike the VS Code and mitmproxy providers, pi already
-normalizes token usage per message (`AssistantMessage.usage`:
-`input`/`output`/`cacheRead`/`cacheWrite`), so there is no vendor wire-format
+normalizes token usage per message (pi-ai's `Usage`:
+`input`/`output`/`cacheRead`/`cacheWrite`/`reasoning`), so there is no vendor wire-format
 decoding to do — the raw JSONL line already is the normalized event.
 
 **pi sessions are a branchable tree, not a linear history.** Every entry
@@ -1102,48 +1102,93 @@ hyphens.
 **Turn boundaries and usage** follow the same "group by user message"
 pattern already used for VS Code's `main.jsonl` (`turn-grouper.ts`'s
 `groupBranchEntriesByUserMessage`, mirroring `groupEnvelopesByUserMessage`).
-`usage-extractor.ts` sums every `AssistantMessage.usage` in a turn's span
-into `uncachedInput`/`output`/`cacheRead`/`cacheWrite` — a turn can contain
-several round-trips when the agent loops through tool calls before
-answering, same reasoning as the VS Code provider's per-turn `llm_request`
-summing.
+Entries before the first user message (the leading system message, an early
+`usage` entry) become the first turn's `precedingEntries`, so usage they
+carry isn't dropped; per-round consumers (inspector, tool calls) only read a
+turn's own `entries`. `usage-extractor.ts` sums every usage-bearing entry in
+a turn's span into `uncachedInput`/`output`/`cacheRead`/`cacheWrite` — a
+turn can contain several round-trips when the agent loops through tool
+calls before answering, same reasoning as the VS Code provider's per-turn
+`llm_request` summing. pi's schema has five usage carriers, all of which
+pi itself counts toward session totals, so all are summed:
 
-**Provisional pending a real captured session (constraint 5/§11.4's
-verify-against-real-data discipline).** This provider was built from pi's
-published docs schema; the project's usual practice of pinning extractors
-against a real, redacted capture is still outstanding for this provider.
-Until then:
+| Carrier | Schema reference (vendored package) | Notes |
+|---|---|---|
+| `AssistantMessage.usage` | `docs/message-types.md` "AssistantMessage"/"Usage" | Always present; a missing one makes the turn's figure unknown. Only these count toward `roundsCount` (main-model round-trips the inspector pairs). |
+| `ToolResultMessage.usage` | `docs/message-types.md` "ToolResultMessage" | Optional: nested model work by the tool. |
+| `usage` entry (`kind`, e.g. `cache_warm`) | `docs/session-format.md` "UsageEntry"; `dist/core/session-manager.d.ts` `UsageEntry` | Usage outside any assistant message; any `kind` counts. Appended as a child of the leaf and advances it (`SessionManager.appendUsage` → `_appendEntry`), so it sits inline on its branch. |
+| `compaction.usage` | `docs/session-format.md` "CompactionEntry" | Optional: the LLM call that generated the summary. |
+| `branch_summary.usage` | `docs/session-format.md` "BranchSummaryEntry" | Optional: same. |
 
-- `tool`, `vision`, and `reasoning` token counts stay permanently
-  `{ known: false }` — no confirmed field separates them from
-  `output`/`input` in the documented `usage` shape (`ToolResultMessage.usage`
-  exists but its shape is unconfirmed).
+**Attribution rule:** non-assistant usage is attributed to the turn whose
+span (its user message up to the next one) contains the entry; before the
+first user message, to the first turn. A `branch_summary` is written just
+before the user message that continues the new branch, so its usage lands
+on the previous turn of that branch.
+
+**Reasoning** comes from `Usage.reasoning` (pi-ai `dist/types.d.ts`
+`Usage`): optional, set only by providers that report a breakdown, and
+already included in `output` (never added on top). A usage with
+`output === 0` and no `reasoning` field contributes 0 (reasoning ⊆
+output); any other usage without the field makes the turn's `reasoning`
+unknown.
+
+**Verified against the published schema shipped in the vendored
+`@earendil-works/pi-coding-agent` 0.87.1** (`docs/session-format.md`,
+`docs/message-types.md`, pi-ai `dist/types.d.ts`, `dist/core/
+session-manager.d.ts`/`.js`), pinned by the schema-faithful fixture
+`fixtures/pi-agent/schema-v3-session.jsonl`. Still **not** a real captured
+session — the project's usual practice of pinning extractors against a
+real, redacted capture remains outstanding for this provider. Consequences:
+
+- `tool` and `vision` token counts are `{ known: false }` — confirmed: pi's
+  `Usage` has no field separating them from `input`/`output`.
 - `costAiCredits` (both per-turn and session-level) is permanently
   `{ known: false }`, the same precedent as the mitmproxy provider's
   non-Copilot vendors (§6.2.3) — AI Credits is a Copilot-specific billing
-  unit with no defined conversion for pi's own USD cost.
+  unit with no defined conversion for pi's own USD cost (`Usage.cost`).
 - `readTurnDetail` (`turn-inspector-builder.ts`) needs no VS-Code-style
   array-length diffing across rounds — pi's JSONL entries are already
-  incremental (each is only its own new content) — but the exact content-
-  block field names it assumes (`text`/`content` on text/thinking blocks,
-  `id`/`name`/`args` on `toolCall` blocks) are inferred from pi's docs, not
-  yet confirmed against a real capture.
+  incremental (each is only its own new content). Content-block fields
+  follow the schema: `text` on `TextContent`, `thinking` on
+  `ThinkingContent`, `id`/`name`/`arguments` on `ToolCall`
+  (`pi-message.ts`'s `toolCallArgumentsOf` also accepts the pre-schema
+  `args` spelling the older hand-authored fixtures use).
 - Fork vs. rewind disambiguation is approximate: a turn immediately
   following a tree branch point (an entry claimed as `parentId` by more than
   one other entry) is always tagged `triggeredEvent: "fork"`; a real
   `branch_summary` entry's more specific intent isn't yet distinguished.
 
-`toolInventory` is never populated (Analyze-mode-only optional field) — pi's
-own JSONL session format has no equivalent captured artifact, and
-`selectedTools` (see below) is currently only used for a summary token-count
-label, not per-tool entries; this is a natural, near-zero-cost follow-up
-that hasn't been picked up yet.
+**`systemPrompt` and `toolInventory` come from the session file itself when
+it has system messages.** pi persists the prompt and tool loadout as
+`role: "system"` messages (`docs/session-format.md` "SessionMessageEntry";
+`docs/message-types.md` "SystemMessage"): the first request persists one
+with every prompt section (`sections`) and tool declaration (`toolsAdded`);
+later ones append `content`, patch `sections` by name (`null` removes one),
+list `toolsAdded`/`toolsRemoved`, or reset with `replace: true`; a
+`compaction` entry's optional `systemMessage` is a complete checkpoint.
+`system-message-replay.ts`'s `replaySystemMessages` replays them along the
+branch exactly like pi-ai's `getCurrentSystemMessage`/`getSystemMessageText`
+(`dist/utils/transcript.js`, `dist/utils/text.js`) into the final prompt
+text and tool set, plus every tool declared anywhere on the branch.
+`system-prompt-components.ts`'s `buildPiSystemPromptComponentsFromState`
+turns that into components: a `built-in` component for the base `content`
+and one per named section (section names are pi's own and free-form, so
+they are not mapped onto `repo-instructions`/`skill-manifest`), and a
+`tool-definitions` component — all with real `estimateTokenCount` counts,
+since every part's text is captured. `toolInventory` reuses
+`jsonl/tool-inventory.ts`'s `buildToolInventory` over the declared tool
+names and each turn's invoked tool calls (a tool removed mid-session still
+counts as loaded, since it was available when used). Sessions with no
+system message (recorded before pi persisted them) leave both unset and
+fall back to the sidecar below for `systemPrompt`; `toolInventory` stays
+unset for them.
 
-**`systemPrompt` is populated conditionally, via an optional sidecar log
+**Sidecar fallback: `systemPrompt` via an optional sidecar log
 (Phase 9.8).** `packages/pi-system-prompt-logger` (§10) is a vendored Pi
-extension that captures the missing artifact pi's own session format
-lacks — the fully assembled system prompt plus selected tools/skills/context
-files — to a separate JSONL sidecar log
+extension that captures the fully assembled system prompt plus selected
+tools/skills/context files — which older pi session files lack — to a
+separate JSONL sidecar log
 (`~/.pi/agent/logs/system-prompts.jsonl`, or `$PI_SYSTEM_PROMPT_LOG_PATH`)
 from outside pi's own session format. `PiAgentLogProvider` optionally reads
 it:
@@ -1169,15 +1214,17 @@ it:
   `selectedTools.length` when present.
 - A new `PiAgentLogProvider.readSystemPromptText(sessionId)` method — not on
   the shared `LogProvider` interface (ISP: `VscodeLogProvider`/
-  `MitmproxyLogProvider` have no equivalent) — returns the matched record's
-  raw text, or `null`. `app.ts`'s `GET /api/sessions/:id/system-prompt`
+  `MitmproxyLogProvider` have no equivalent) — returns the replayed in-file
+  prompt text when the branch has system messages, else the matched sidecar
+  record's raw text, or `null`. `app.ts`'s `GET /api/sessions/:id/system-prompt`
   branches on `registry.getActiveProviderId() === "pi-agent"` before
   touching the VS-Code-only session-store path, delegating to this method
   (same 200 text/plain / 404 JSON contract either way, so the frontend needs
   no provider-specific response parsing).
 
-No match (extension not installed, or this session predates capture) leaves
-`Session.systemPrompt` unset exactly as before Phase 9.8 — `components/
+No in-file system message and no sidecar match (extension not installed, or
+this session predates capture) leaves `Session.systemPrompt` unset exactly as
+before Phase 9.8 — `components/
 SystemPromptBreakdown`'s "Open system prompt inspector" button always
 renders for `pi-agent` sessions regardless (unlike other providers, which
 gate it on a `built-in` component being present), and opening it without a
@@ -1274,13 +1321,14 @@ real captures on this machine found the base system prompt is never
 written to disk anywhere by Claude Code CLI (only per-turn dynamic
 `attachment` injections are captured, which feed `readTurnDetail`'s
 `addedMessages`, not the session-level system prompt). This differs from
-pi-agent (§6.2.5), whose `systemPrompt` gap is filled *conditionally* by
-an optional vendored sidecar-logger extension — no equivalent exists (or
-is planned) for Claude Code CLI, so there is no third branch on `GET
+pi-agent (§6.2.5), whose session files persist the prompt as system
+messages (with an optional vendored sidecar-logger extension as the
+fallback for older files) — no equivalent exists (or is planned) for
+Claude Code CLI, so there is no third branch on `GET
 /api/sessions/:id/system-prompt`: `claude-code` sessions fall through to
 the same 404 path `mitmproxy` sessions already use. `toolInventory` stays
-unset for the same "keep v1 scoped to the two requested features" reason
-as pi-agent's current state, not a data-availability gap.
+unset for the same "keep v1 scoped to the two requested features" reason,
+not a data-availability gap.
 
 `readTurnDetail` (`turn-inspector-builder.ts`) reuses
 `build-content-parts.ts`'s `buildContentPart` throughout, and — unlike
@@ -1723,12 +1771,13 @@ Carried over from vision §7 plus new ones raised while designing this layer:
   fixtures with computed fields (author ergonomics vs. easy schema
   validation) — leaning JSON validated by the `domain` zod schema so
   non-engineers could in principle contribute scenarios later.
-- Whether pi's `usage` object ever exposes reasoning or vision/image tokens
-  separately from `output`/`input`, and the exact shape of
-  `ToolResultMessage.usage` — the pi-agent provider (§6.2.5) currently ships
-  all three permanently `{ known: false }` pending a real captured session to
-  verify against, the same discipline every other extractor in this app was
-  built under (§7, §11.4).
+- Whether a real captured pi session matches the published schema the
+  pi-agent provider (§6.2.5) is now verified against (vendored
+  `@earendil-works/pi-coding-agent` 0.87.1 docs/types) — reasoning comes
+  from `Usage.reasoning`, `ToolResultMessage.usage` shares the `Usage`
+  shape, and vision/tool tokens are confirmed absent; pinning against a
+  real, redacted capture remains the same discipline every other extractor
+  in this app was built under (§7, §11.4).
 - How aggressively to keep seeded Learn scenarios in sync with
   [agentic-coding-explained.md](agentic-coding-explained.md) as it evolves —
   the vision doc doesn't mandate automated drift-checking, but a periodic

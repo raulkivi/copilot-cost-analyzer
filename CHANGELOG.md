@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   pull request template.
 
 ### Fixed
+- pi sessions no longer undercount tokens: usage from top-level `usage`
+  entries (e.g. cache warming), tool results, compactions and branch
+  summaries now counts toward the turn it occurs in, and reasoning tokens
+  are read from pi's `Usage.reasoning`. Tool-call arguments and thinking text
+  are read from pi's published field names (`arguments`, `thinking`). The
+  system prompt and tool inventory now come from the system messages pi
+  stores in the session file, with the `pi-system-prompt-logger` sidecar as
+  the fallback for older files.
 - Web test files now type-check: `npm run typecheck` (new, every workspace,
   test files included) runs in CI. `packages/web` gains `tsconfig.app.json`, an
   app-only check without Node types, so browser code can't pick up `node:*`

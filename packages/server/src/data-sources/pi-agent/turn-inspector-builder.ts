@@ -1,6 +1,13 @@
 import type { TurnInspectorDetail } from "@copilot-cost-analyzer/domain";
 import { buildContentPart } from "../log-providers/build-content-parts.js";
-import { assistantMessageOf, findToolCallBlock, messageOf, toolResultMessageOf, type PiAssistantMessage } from "./pi-message.js";
+import {
+  assistantMessageOf,
+  findToolCallBlock,
+  messageOf,
+  toolCallArgumentsOf,
+  toolResultMessageOf,
+  type PiAssistantMessage,
+} from "./pi-message.js";
 import type { PiRawEntry } from "./pi-jsonl-reader.js";
 import type { PiTurnGroup } from "./turn-grouper.js";
 
@@ -9,13 +16,14 @@ function isThinkingBlock(block: unknown): boolean {
 }
 
 // A content block's own text field, when present, so the wrapping
-// `{ type, ... }` envelope isn't stringified alongside the actual text.
-// Falls back to the raw block for shapes not yet confirmed against a real
-// captured session (see usage-extractor.ts's UNCONFIRMED_REASON note).
+// `{ type, ... }` envelope isn't stringified alongside the actual text:
+// TextContent.text, ThinkingContent.thinking (docs/message-types.md);
+// `content` is a tolerated fallback. Anything else (a toolCall block) is
+// shown raw.
 function blockText(block: unknown): unknown {
   if (typeof block === "object" && block !== null) {
-    const withText = block as { text?: unknown; content?: unknown };
-    return withText.text ?? withText.content ?? block;
+    const withText = block as { text?: unknown; thinking?: unknown; content?: unknown };
+    return withText.text ?? withText.thinking ?? withText.content ?? block;
   }
   return block;
 }
@@ -61,7 +69,7 @@ export function buildTurnInspectorDetail(turnIndex: number, group: PiTurnGroup):
       return [
         {
           name: typeof toolResult.toolName === "string" ? toolResult.toolName : "unknown",
-          args: [buildContentPart(block?.args ?? null)],
+          args: [buildContentPart(toolCallArgumentsOf(block) ?? null)],
           result: [buildContentPart(toolResult.content ?? null)],
         },
       ];

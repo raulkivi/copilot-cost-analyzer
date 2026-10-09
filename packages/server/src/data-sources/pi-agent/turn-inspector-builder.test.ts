@@ -14,7 +14,7 @@ function toolResultMessage(id: string, toolCallId: string, toolName: string, con
 }
 
 function group(entries: PiRawEntry[]): PiTurnGroup {
-  return { userMessageEntry: entries[0], entries };
+  return { userMessageEntry: entries[0], precedingEntries: [], entries };
 }
 
 describe("buildTurnInspectorDetail", () => {
@@ -68,5 +68,24 @@ describe("buildTurnInspectorDetail", () => {
     expect(detail.rounds[1].request.addedMessages).toEqual([]);
     expect(detail.rounds[1].request.toolCalls).toHaveLength(1);
     expect(detail.rounds[1].request.toolCalls[0].name).toBe("read_file");
+  });
+
+  // message-types.md "ThinkingContent" / "ToolCall": thinking text lives in
+  // `thinking`, tool arguments in `arguments`.
+  it("reads ThinkingContent.thinking and ToolCall.arguments per pi's published schema", () => {
+    const g = group([
+      userMessage("u1"),
+      assistantMessage("a1", [
+        { type: "thinking", thinking: "check the file", thinkingSignature: "opaque" },
+        { type: "toolCall", id: "call-1", name: "read", arguments: { path: "a.ts" } },
+      ]),
+      toolResultMessage("t1", "call-1", "read", [{ type: "text", text: "file contents" }]),
+      assistantMessage("a2", [{ type: "text", text: "done" }]),
+    ]);
+
+    const detail = buildTurnInspectorDetail(0, g);
+
+    expect(detail.rounds[0].response.reasoning).toEqual([{ kind: "text", text: "check the file" }]);
+    expect(detail.rounds[1].request.toolCalls[0].args).toEqual([{ kind: "text", text: expect.stringContaining("a.ts") }]);
   });
 });

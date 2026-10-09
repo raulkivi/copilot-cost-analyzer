@@ -28,6 +28,10 @@ function toolResultMessage(id: string, toolCallId: string, toolName: string, usa
   };
 }
 
+function usageEntry(id: string, usage: Record<string, unknown>, kind = "cache_warm"): PiRawEntry {
+  return { type: "usage", id, kind, provider: "anthropic", model: "claude-x", usage };
+}
+
 function bashResult(id: string, toolCallId: string, text: string, isError: boolean | undefined): PiRawEntry {
   return {
     type: "message",
@@ -43,7 +47,7 @@ function bashResult(id: string, toolCallId: string, text: string, isError: boole
 }
 
 function group(entries: PiRawEntry[]): PiTurnGroup {
-  return { userMessageEntry: entries[0], entries };
+  return { userMessageEntry: entries[0], precedingEntries: [], entries };
 }
 
 describe("extractTurnUsage", () => {
@@ -90,21 +94,112 @@ describe("extractTurnUsage", () => {
     expect(usage.costAiCredits.known).toBe(false);
   });
 
-  it("vision and reasoning are unavailable (unconfirmed against a real capture)", () => {
+  it("vision and tool stay unavailable: pi's Usage shape has no field separating them", () => {
     const usage = extractTurnUsage(
       group([userMessage("u1"), assistantMessage("a1", { input: 1, output: 1, cacheRead: 0, cacheWrite: 0 })]),
     );
-    expect(usage.vision.known).toBe(false);
-    expect(usage.reasoning.known).toBe(false);
+    expect(usage.vision).toEqual({ known: false, reason: expect.stringMatching(/Usage/) });
+    expect(usage.tool).toEqual({ known: false, reason: expect.stringMatching(/Usage/) });
   });
 
-  it("tool usage sums ToolResultMessage.usage when every tool result in the turn has one", () => {
-    const g = group([
-      userMessage("u1"),
-      toolResultMessage("t1", "call-1", "read_file", { input: 0, output: 5 }),
-    ]);
+  // pi-ai Usage.reasoning (types.d.ts; docs/message-types.md "Usage"): a
+  // subset of `output`, set only by providers exposing the breakdown.
+  describe("reasoning", () => {
+    it("sums Usage.reasoning across the turn's rounds", () => {
+      const usage = extractTurnUsage(
+        group([
+          userMessage("u1"),
+          assistantMessage("a1", { input: 1, output: 40, cacheRead: 0, cacheWrite: 0, reasoning: 30 }),
+          assistantMessage("a2", { input: 1, output: 5, cacheRead: 0, cacheWrite: 0, reasoning: 0 }),
+        ]),
+      );
+      expect(usage.reasoning).toEqual({ known: true, value: 30 });
+      expect(usage.output).toEqual({ known: true, value: 45 }); // reasoning is not added on top of output
+    });
 
-    expect(extractTurnUsage(g).tool.known).toBe(false); // no confirmed field name yet from real data — see extractToolUsage
+    it("treats a zero-output usage without a reasoning field as 0 reasoning (reasoning ⊆ output)", () => {
+      const usage = extractTurnUsage(
+        group([
+          userMessage("u1"),
+          assistantMessage("a1", { input: 1, output: 40, cacheRead: 0, cacheWrite: 0, reasoning: 30 }),
+          usageEntry("w1", { input: 0, output: 0, cacheRead: 500, cacheWrite: 0 }),
+        ]),
+      );
+      expect(usage.reasoning).toEqual({ known: true, value: 30 });
+    });
+
+    it("is unavailable when a round with output omits reasoning (provider reports no breakdown)", () => {
+      const usage = extractTurnUsage(
+        group([userMessage("u1"), assistantMessage("a1", { input: 1, output: 1, cacheRead: 0, cacheWrite: 0 })]),
+      );
+      expect(usage.reasoning).toEqual({ known: false, reason: expect.stringMatching(/reasoning/) });
+    });
+  });
+
+  // session-format.md "UsageEntry" / session-manager.d.ts UsageEntry:
+  // model-attributed usage outside any assistant message, counted in session
+  // totals; unknown `kind` values are normal usage.
+  it("adds top-level usage entries (e.g. a cache_warm) to the turn's totals without counting them as rounds", () => {
+    const usage = extractTurnUsage(
+      group([
+        userMessage("u1"),
+        assistantMessage("a1", { input: 100, output: 20, cacheRead: 0, cacheWrite: 10 }),
+        usageEntry("w1", { input: 0, output: 0, cacheRead: 50000, cacheWrite: 0 }, "cache_warm"),
+        usageEntry("w2", { input: 7, output: 3, cacheRead: 0, cacheWrite: 0 }, "some-future-kind"),
+      ]),
+    );
+
+    expect(usage.uncachedInput).toEqual({ known: true, value: 107 });
+    expect(usage.output).toEqual({ known: true, value: 23 });
+    expect(usage.cacheRead).toEqual({ known: true, value: 50000 });
+    expect(usage.cacheWrite).toEqual({ known: true, value: 10 });
+    expect(usage.roundsCount).toBe(1);
+  });
+
+  // message-types.md "ToolResultMessage" (optional usage from nested model
+  // work) and session-format.md CompactionEntry/BranchSummaryEntry (optional
+  // usage from generating the summary, "included in session token and cost
+  // totals").
+  it("adds optional usage carried by toolResult, compaction and branch_summary entries", () => {
+    const usage = extractTurnUsage(
+      group([
+        userMessage("u1"),
+        assistantMessage("a1", { input: 100, output: 20, cacheRead: 0, cacheWrite: 0 }),
+        toolResultMessage("t1", "call-1", "subagent", { input: 200, output: 30, cacheRead: 5, cacheWrite: 0 }),
+        { type: "compaction", id: "c1", summary: "s", firstKeptEntryId: "u1", tokensBefore: 9, usage: { input: 1000, output: 100, cacheRead: 0, cacheWrite: 0 } },
+        { type: "branch_summary", id: "b1", fromId: "x", summary: "s", usage: { input: 10, output: 1, cacheRead: 0, cacheWrite: 2 } },
+      ]),
+    );
+
+    expect(usage.uncachedInput).toEqual({ known: true, value: 1310 });
+    expect(usage.output).toEqual({ known: true, value: 151 });
+    expect(usage.cacheRead).toEqual({ known: true, value: 5 });
+    expect(usage.cacheWrite).toEqual({ known: true, value: 2 });
+    expect(usage.roundsCount).toBe(1);
+  });
+
+  it("ignores toolResult/compaction/branch_summary entries without usage (it is optional there)", () => {
+    const usage = extractTurnUsage(
+      group([
+        userMessage("u1"),
+        assistantMessage("a1", { input: 100, output: 20, cacheRead: 0, cacheWrite: 0 }),
+        toolResultMessage("t1", "call-1", "read_file"),
+        { type: "compaction", id: "c1", summary: "s", firstKeptEntryId: "u1", tokensBefore: 9 },
+      ]),
+    );
+
+    expect(usage.uncachedInput).toEqual({ known: true, value: 100 });
+    expect(usage.output).toEqual({ known: true, value: 20 });
+  });
+
+  it("includes usage from entries the grouper attributed to the turn before its user message", () => {
+    const usage = extractTurnUsage({
+      userMessageEntry: userMessage("u1"),
+      precedingEntries: [usageEntry("w0", { input: 0, output: 0, cacheRead: 40000, cacheWrite: 0 }, "cache_warm")],
+      entries: [userMessage("u1"), assistantMessage("a1", { input: 100, output: 20, cacheRead: 0, cacheWrite: 0 })],
+    });
+
+    expect(usage.cacheRead).toEqual({ known: true, value: 40000 });
   });
 });
 
@@ -123,6 +218,21 @@ describe("extractToolCalls", () => {
     expect(toolCalls).toHaveLength(1);
     expect(toolCalls[0].name).toBe("read_file");
     expect(toolCalls[0].argsSummary).toContain("src/index.ts");
+  });
+
+  it("reads ToolCall.arguments (message-types.md \"ToolCall\") for the args summary and shell command", () => {
+    const g = group([
+      userMessage("u1"),
+      assistantMessage("a1", undefined, "claude-x", [
+        { type: "toolCall", id: "c1", name: "bash", arguments: { command: "npm test" } },
+      ]),
+      bashResult("t1", "c1", "ok", false),
+    ]);
+
+    const [call] = extractToolCalls(g);
+
+    expect(call.argsSummary).toBe("npm test");
+    expect(call.shell).toEqual({ command: "npm test", program: "npm" });
   });
 
   it("returns an empty array when the turn made no tool calls", () => {

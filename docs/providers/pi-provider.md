@@ -30,27 +30,32 @@ idle-gap split.
 | [session-tree.ts](../../packages/server/src/data-sources/pi-agent/session-tree.ts) | `findLeafEntryIds` / `walkBranch` — tree reconstruction from `parentId` links |
 | [session-id.ts](../../packages/server/src/data-sources/pi-agent/session-id.ts) | `computePiFileHash` / `computeBranchSessionId` — session IDs use a `__branch__` separator (pi's leaf ids are already uuids) |
 | [turn-grouper.ts](../../packages/server/src/data-sources/pi-agent/turn-grouper.ts) | `groupBranchEntriesByUserMessage` — groups a branch into turns, mirroring the VS Code provider's grouping |
-| [usage-extractor.ts](../../packages/server/src/data-sources/pi-agent/usage-extractor.ts) | Sums `AssistantMessage.usage` per turn into `uncachedInput`/`output`/`cacheRead`/`cacheWrite`; also extracts tool calls |
+| [usage-extractor.ts](../../packages/server/src/data-sources/pi-agent/usage-extractor.ts) | Sums every usage carrier in a turn (assistant, toolResult, `usage` entries, compaction, branch_summary) into `uncachedInput`/`output`/`cacheRead`/`cacheWrite`/`reasoning`; also extracts tool calls |
 | [pi-message.ts](../../packages/server/src/data-sources/pi-agent/pi-message.ts) | Type guards/accessors for pi's message shapes (`PiAssistantMessage`, `PiToolResultMessage`, `PiToolCallBlock`) |
 | [turn-inspector-builder.ts](../../packages/server/src/data-sources/pi-agent/turn-inspector-builder.ts) | Builds `TurnInspectorDetail` from a turn's raw entries (Analyze-mode drill-down) |
 | [resolve-pi-agent-sessions-dir.ts](../../packages/server/src/platform/pi-agent-paths/resolve-pi-agent-sessions-dir.ts) | Locates `~/.pi/agent/sessions/` and lists session files for the current cwd |
 | [resolve-pi-system-prompt-log-path.ts](../../packages/server/src/platform/pi-agent-paths/resolve-pi-system-prompt-log-path.ts) | Resolves the optional `pi-system-prompt-logger` sidecar log path (`PI_SYSTEM_PROMPT_LOG_PATH` env override, else `~/.pi/agent/logs/system-prompts.jsonl`) |
 | [system-prompt-sidecar-reader.ts](../../packages/server/src/data-sources/pi-agent/system-prompt-sidecar-reader.ts) | Reads the sidecar JSONL into a `Map` keyed by resolved `sessionFile` path (earliest-wins on duplicates) |
-| [system-prompt-components.ts](../../packages/server/src/data-sources/pi-agent/system-prompt-components.ts) | `buildPiSystemPromptComponents` — turns a matched sidecar record into `SystemPromptComponent[]`, mirroring `buildSystemPromptBreakdown`'s VS Code shape |
-| `packages/server/fixtures/pi-agent/*.jsonl` | Test fixtures: `normal-session`, `forked-session`, `malformed-lines-session`, `no-usage-session`. No static sidecar-log fixture exists — its `sessionFile` would be checkout-path-dependent, so tests synthesize one into a tmpdir instead |
+| [system-message-replay.ts](../../packages/server/src/data-sources/pi-agent/system-message-replay.ts) | `replaySystemMessages` — replays a branch's `role: "system"` messages (and compaction checkpoints) into the current prompt text, sections and tools, like pi-ai's `getCurrentSystemMessage` |
+| [system-prompt-components.ts](../../packages/server/src/data-sources/pi-agent/system-prompt-components.ts) | `buildPiSystemPromptComponentsFromState` (in-file system prompt) and `buildPiSystemPromptComponents` (sidecar fallback) → `SystemPromptComponent[]`, mirroring `buildSystemPromptBreakdown`'s VS Code shape |
+| `packages/server/fixtures/pi-agent/*.jsonl` | Test fixtures: `schema-v3-session` (follows the published schema in the vendored package: system messages, `arguments`, `thinking`, toolResult usage, a `cache_warm` usage entry, a compaction with usage and `systemMessage`), plus the older hand-authored `normal-session`, `forked-session`, `malformed-lines-session`, `no-usage-session`. No static sidecar-log fixture exists — its `sessionFile` would be checkout-path-dependent, so tests synthesize one into a tmpdir instead |
 
 Each `.ts` above has a matching `.test.ts` (TDD-first, per `architecture.md`
 §11.4); `pi-agent-log-provider.test.ts` also runs the shared
 `describeLogProviderContract` conformance suite.
 
-## System prompt: sidecar-log-based, optional (Phase 9.8); tool inventory still unsupported
+## System prompt and tool inventory: in-file first, sidecar fallback
 
-`Session.toolInventory` is never populated — pi's JSONL format has no
-equivalent of VS Code's `tools_N.json` artifact, and this is a low-priority,
-not-yet-picked-up follow-up (`components/ToolInventoryPanel` renders empty
-for pi sessions as a result).
+pi persists the prompt and tool loadout in the session file as
+`role: "system"` messages (vendored `docs/session-format.md`
+"SessionMessageEntry"). `system-message-replay.ts` replays them along the
+branch, and `Session.systemPrompt` (base content + one component per named
+section + tool definitions, all with real tokenizer estimates),
+`Session.toolInventory` (every tool declared on the branch, with the turns
+that invoked it) and `readSystemPromptText` all come from that when present.
 
-`Session.systemPrompt` **is** populated, conditionally, since Phase 9.8: the
+Older session files without system messages fall back to the sidecar:
+`Session.systemPrompt` is populated, conditionally, since Phase 9.8: the
 vendored `packages/pi-system-prompt-logger` extension (Phase 9.7, not part
 of pi itself) captures the fully assembled system prompt plus selected
 tools/skills/context files to a JSONL sidecar log
@@ -92,7 +97,17 @@ Knock-on effects in the UI for pi sessions:
   `~/.pi/agent/extensions/pi-system-prompt-logger.js` — this is the actual
   install mechanism; the UI never links to the extension's own README.
 
-## Most recent change (2026-09-04, Phase 9.8)
+## Most recent change (2026-10-09, schema verification)
+
+Checked the provider against the published schema shipped in the vendored
+`@earendil-works/pi-coding-agent` 0.87.1 (`docs/session-format.md`,
+`docs/message-types.md`, pi-ai `dist/types.d.ts`) and fixed what it
+dropped: top-level `usage` entries, optional usage on toolResult/compaction/
+branch_summary, `Usage.reasoning`, `ToolCall.arguments`,
+`ThinkingContent.thinking`, and the in-file system prompt/tool loadout. See
+architecture.md §6.2.5 for the attribution rules.
+
+## Earlier change (2026-09-04, Phase 9.8)
 
 Wired `PiAgentLogProvider` to optionally read the `pi-system-prompt-logger`
 sidecar log vendored in Phase 9.7, per two explicit UX requirements: the
@@ -139,21 +154,19 @@ above.
 
 ## Open items (pending real-data verification)
 
-Per architecture.md §6.2.5, this provider was built from pi's *published
-docs schema* (`https://pi.dev/docs/latest/session-format`), not yet pinned
-against a real, redacted captured session — the project's usual
-verify-against-real-data discipline (constraint 5/§11.4) is still
-outstanding here. Concretely, until a real capture is obtained:
+Per architecture.md §6.2.5, this provider is now verified against pi's
+published schema as shipped in the vendored package, but still not pinned
+against a real, redacted captured session. Until one is obtained:
 
-- `tool`, `vision`, `reasoning` token counts stay permanently
-  `{ known: false }` — no confirmed field separates them from
-  `output`/`input` in the documented `usage` shape.
+- `tool`, `vision` token counts stay `{ known: false }` — confirmed: pi's
+  `Usage` has no field for them.
 - `costAiCredits` (per-turn and session-level) stays permanently
   `{ known: false }` — AI Credits is Copilot's own billing unit with no
   defined conversion for pi's own cost figures (may never be resolvable).
-- `turn-inspector-builder.ts`'s content-block field names
-  (`text`/`content` on text/thinking blocks, `id`/`name`/`args` on
-  `toolCall` blocks) are inferred from docs, not confirmed.
+- Non-assistant usage is attributed to the turn whose span contains it; a
+  `branch_summary`'s usage therefore lands on the previous turn of the new
+  branch. Whether it should count toward the following turn instead is a
+  judgement call worth revisiting with real data.
 - Fork vs. rewind is approximate: any turn following a tree branch point is
   tagged `triggeredEvent: "fork"`; a real `branch_summary` entry's more
   specific intent isn't distinguished yet.
