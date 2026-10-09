@@ -46,6 +46,11 @@ cards with corner registration marks, Barlow/Barlow Condensed type.*
 - [Threat model](docs/threat-model.md) — trust boundaries, STRIDE analysis
   of the API/data-source surface, and verified mitigations (path
   traversal, SQL injection, XSS, CSRF) vs. residual risks.
+- [Tool-call audit plan](docs/plans/tool-call-audit.md) — design and
+  decisions for the tool-call audit (outcomes, failure classification,
+  cross-session rollup, audit charts) and its read-only MCP server
+  (`scripts/mcp-server.sh`; see the User Guide's "Querying the audit from
+  Claude Code").
 - [pi-system-prompt-logger](packages/pi-system-prompt-logger/README.md) —
   optional Pi coding-agent extension, vendored in this repo, that captures
   pi's assembled system prompt to a JSONL sidecar log so Analyze mode's

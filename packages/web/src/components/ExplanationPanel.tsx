@@ -2,6 +2,7 @@ import type { Turn } from "@copilot-cost-analyzer/domain";
 import type { Mode } from "../state/session-store.js";
 import { TRIGGER_LABELS } from "../lib/trigger-labels.js";
 import { Blueprint } from "./ui/Blueprint.js";
+import { StatusTag } from "./ui/StatusTag.js";
 import { Tag } from "./ui/Tag.js";
 
 interface ExplanationPanelProps {
@@ -79,6 +80,16 @@ function ToolCallsThisTurn({
               <Tag variant="neutral" style={{ fontFamily: "monospace" }}>
                 {toolCall.name}
               </Tag>
+              {toolCall.outcome && <StatusTag outcome={toolCall.outcome} />}
+              {toolCall.shell && (
+                <span
+                  title={toolCall.shell.command}
+                  className="mono truncate"
+                  style={{ maxWidth: 220, display: "inline-block", verticalAlign: "bottom" }}
+                >
+                  {toolCall.shell.command}
+                </span>
+              )}
               {(toolCall.filesTouched ?? []).map((file) => (
                 <span
                   key={file}

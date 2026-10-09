@@ -4,7 +4,7 @@ import { makeTurn } from "../test-support/turn-fixture.js";
 import { TurnsTable } from "./TurnsTable.js";
 
 describe("TurnsTable", () => {
-  it("renders the 12-column header spec in order", () => {
+  it("renders the 14-column header spec in order", () => {
     render(<TurnsTable turns={[]} selectedTurnIndex={0} onSelectTurn={() => {}} />);
 
     const headers = screen.getAllByRole("columnheader").map((cell) => cell.textContent);
@@ -12,6 +12,7 @@ describe("TurnsTable", () => {
       "Turn",
       "Trigger",
       "Rounds",
+      "Calls",
       "Uncached in",
       "Cache read",
       "Cache write",
@@ -211,5 +212,24 @@ describe("TurnsTable", () => {
 
     expect(rows[1]).toHaveAttribute("aria-selected", "false");
     expect(rows[2]).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("shows each turn's tool-call count with a failure badge when calls failed", () => {
+    const turns = [
+      makeTurn({
+        index: 0,
+        toolCalls: [
+          { name: "Bash", argsSummary: "ls", outcome: { status: "success" } },
+          { name: "Bash", argsSummary: "foo", outcome: { status: "error", failureCategory: "command-not-found" } },
+          { name: "Bash", argsSummary: "sleep 9", outcome: { status: "interrupted", failureCategory: "timeout" } },
+        ],
+      }),
+      makeTurn({ index: 1, toolCalls: [{ name: "Bash", argsSummary: "ls", outcome: { status: "success" } }] }),
+    ];
+
+    render(<TurnsTable turns={turns} selectedTurnIndex={0} onSelectTurn={() => {}} />);
+
+    expect(screen.getByLabelText("2 of 3 tool calls failed")).toHaveTextContent("✕2");
+    expect(screen.queryByLabelText(/of 1 tool calls failed/)).not.toBeInTheDocument();
   });
 });

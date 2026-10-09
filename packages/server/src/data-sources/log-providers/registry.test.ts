@@ -139,4 +139,14 @@ describe("LogProviderRegistry", () => {
     expect(status.providers.map((p) => p.id)).toEqual(["vscode", "mitmproxy", "test-only"]);
     expect(status.activeProviderId).toBe("test-only");
   });
+
+  it("getProvider looks a provider up by id without changing the active one", () => {
+    const vscode = new StubProvider("vscode", "VS Code", { available: true });
+    const other = new StubProvider("other", "Other", { available: true });
+    const registry = new LogProviderRegistry([vscode, other], dir);
+
+    expect(registry.getProvider("other")).toBe(other);
+    expect(registry.getActiveProviderId()).toBe("vscode");
+    expect(() => registry.getProvider("nope")).toThrow(UnknownLogProviderIdError);
+  });
 });

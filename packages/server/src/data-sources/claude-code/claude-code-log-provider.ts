@@ -14,7 +14,9 @@ import { readClaudeCodeSessionFile, type ClaudeCodeRawEntry } from "./claude-cod
 import { findForkPointIds, resolveActiveLeafUuid, walkBranch } from "./session-tree.js";
 import { groupBranchEntriesByUserMessage, type ClaudeCodeTurnGroup } from "./turn-grouper.js";
 import { groupTurnEntriesByRound } from "./round-grouper.js";
-import { extractToolCalls, extractTurnUsage } from "./usage-extractor.js";
+import { extractTurnUsage } from "./usage-extractor.js";
+import { extractToolCalls } from "./tool-call-extractor.js";
+import { indexToolResults } from "./tool-result-index.js";
 import { buildTurnInspectorDetail } from "./turn-inspector-builder.js";
 import { computeClaudeCodeFileHash, resolveClaudeCodeSessionFilePath } from "./session-id.js";
 import { resolveClaudeCodeTitle } from "./title-resolver.js";
@@ -153,6 +155,7 @@ export class ClaudeCodeLogProvider implements LogProvider {
     const branch = activeLeafUuid ? walkBranch(entries, activeLeafUuid) : [];
     const forkPointIds = findForkPointIds(entries);
     const groups = groupBranchEntriesByUserMessage(branch);
+    const resultIndex = indexToolResults(entries);
 
     const turns: Turn[] = groups.map((group, index) => {
       const usage = extractTurnUsage(group);
@@ -161,7 +164,7 @@ export class ClaudeCodeLogProvider implements LogProvider {
         index,
         userMessage: extractUserMessageText(group.userMessageEntry),
         assistantResponse: extractAssistantResponseText(group),
-        toolCalls: extractToolCalls(group),
+        toolCalls: extractToolCalls(group, resultIndex),
         usage,
         explanation: buildTurnExplanation(usage),
         ...(triggeredEvent ? { triggeredEvent } : {}),
@@ -222,6 +225,6 @@ export class ClaudeCodeLogProvider implements LogProvider {
     if (!group) {
       return null;
     }
-    return buildTurnInspectorDetail(turnIndex, group);
+    return buildTurnInspectorDetail(turnIndex, group, entries);
   }
 }

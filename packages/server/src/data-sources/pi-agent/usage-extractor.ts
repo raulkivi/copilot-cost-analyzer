@@ -2,6 +2,11 @@ import { sumTokenCounts, unavailableTokenCount, type TokenCount } from "@copilot
 import type { ToolCallRecord, TurnUsage } from "@copilot-cost-analyzer/domain";
 import { assistantMessageOf, findToolCallBlock, toolResultMessageOf, type PiAssistantMessage } from "./pi-message.js";
 import type { PiTurnGroup } from "./turn-grouper.js";
+import { MAX_ARGS_SUMMARY_LENGTH, summarizeToolArgs } from "../../services/tool-audit/args-summary.js";
+import { buildToolCallOutcome } from "../../services/tool-audit/outcome-builder.js";
+import { excerptOf } from "../../services/tool-audit/output-redactor.js";
+import { parseShellCommand } from "../../services/tool-audit/shell-command-parser.js";
+import { resolveToolKind } from "../../services/tool-audit/tool-kind-resolver.js";
 
 const MISSING_FIELD_REASON =
   "pi's AssistantMessage did not include a numeric usage figure for this round.";
@@ -59,10 +64,27 @@ export function extractTurnUsage(group: PiTurnGroup): TurnUsage {
   };
 }
 
+const NO_IS_ERROR_REASON =
+  "pi's ToolResultMessage carried no isError flag for this call, so its outcome is not inferred.";
+
+function resultText(content: unknown): string {
+  if (typeof content === "string") {
+    return content;
+  }
+  return Array.isArray(content)
+    ? content
+        .map((part) => (typeof part === "object" && part !== null ? (part as { text?: unknown }).text : undefined))
+        .filter((text): text is string => typeof text === "string")
+        .join("\n")
+    : "";
+}
+
 // One ToolCallRecord per ToolResultMessage in the turn — `name` comes
 // straight from `toolName` (no need to correlate back to the assistant's
-// content block for that), `argsSummary` from the matching toolCallId's
-// arguments on the preceding AssistantMessage's content array, when found.
+// content block for that), args from the matching toolCallId's block on the
+// preceding AssistantMessage, when found. Outcome comes only from pi's own
+// `isError` flag (Phase 9.10); no exit code is parsed from pi's text since
+// its bash output format isn't confirmed.
 export function extractToolCalls(group: PiTurnGroup): ToolCallRecord[] {
   const assistantMessages = assistantMessagesOf(group);
   const toolCalls: ToolCallRecord[] = [];
@@ -74,10 +96,27 @@ export function extractToolCalls(group: PiTurnGroup): ToolCallRecord[] {
     }
     const toolCallId = typeof toolResult.toolCallId === "string" ? toolResult.toolCallId : undefined;
     const block = toolCallId ? findToolCallBlock(assistantMessages, toolCallId) : null;
+    const name = typeof toolResult.toolName === "string" ? toolResult.toolName : "unknown";
+    const kind = resolveToolKind(name);
+    const command =
+      kind === "shell" && typeof block?.args === "object" && block.args !== null
+        ? (block.args as { command?: unknown }).command
+        : undefined;
+    const program = typeof command === "string" ? parseShellCommand(command).program : undefined;
+    const isError = toolResult.isError;
 
     toolCalls.push({
-      name: typeof toolResult.toolName === "string" ? toolResult.toolName : "unknown",
-      argsSummary: block?.args !== undefined ? JSON.stringify(block.args) : "",
+      ...(toolCallId ? { id: toolCallId } : {}),
+      name,
+      kind,
+      argsSummary: summarizeToolArgs(kind, block?.args),
+      ...(typeof command === "string"
+        ? { shell: { command: excerptOf(command, MAX_ARGS_SUMMARY_LENGTH), ...(program ? { program } : {}) } }
+        : {}),
+      outcome:
+        typeof isError === "boolean"
+          ? buildToolCallOutcome({ kind, status: isError ? "error" : "success", text: resultText(toolResult.content) })
+          : buildToolCallOutcome({ kind, status: "unknown", text: "", reason: NO_IS_ERROR_REASON }),
     });
   }
 

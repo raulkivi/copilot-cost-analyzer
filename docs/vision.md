@@ -169,7 +169,13 @@ showing the behavioral-proxy fallback silently.
 
 - Not a replacement for the `/chronicle` skill's standup/search features —
   this app is about visual, turn-by-turn exploration of cache/token/AI Credits
-  mechanics, not activity reporting.
+  mechanics, not general activity reporting. The one deliberate extension
+  (Phase 9.10, [plans/tool-call-audit.md](plans/tool-call-audit.md)) is a
+  **tool-call audit**: which tools and shell commands an agent ran, how many
+  failed and why (missing utility, wrong directory, bad arguments, …), and
+  what that failure recovery cost — because failed calls are a direct,
+  avoidable driver of token spend. It is exposed in the UI and through a
+  local, read-only MCP server.
 - Not scoped to editing or replaying sessions (no `/rewind`-style mutation of
   real logs) — it's a read-only viewer/analyzer.
 - No dependency on the cloud-synced (DuckDB) store — the app only reads local

@@ -263,3 +263,62 @@ a { color: var(--color-accent); text-underline-offset: 3px; }
 .btn { border: 1px solid var(--color-divider); }
 .btn-primary { border-color: var(--color-accent); }
 .btn-ghost { border-color: transparent; }
+
+/* — tool-call audit charts (Phase 9.10). Marks follow the dataviz spec:
+     thin bars (≤ 20px) with a 4px rounded data end, a 2px surface gap
+     between segments, hairline recessive gridlines, text in text tokens
+     (never the series colour). Status colours live in lib/audit-format.ts. — */
+.chart { display: flex; flex-direction: column; gap: var(--space-2); }
+.chart-toolbar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); flex-wrap: wrap; }
+.chart-legend { display: flex; flex-wrap: wrap; gap: var(--space-3); margin: 0; padding: 0; list-style: none; font-size: 12px; }
+.chart-legend li { display: inline-flex; align-items: center; gap: 5px; }
+.chart-legend-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.chart-table-toggle { font-size: 12px; padding: 2px 6px; }
+.chart-scroll { overflow-x: auto; }
+.chart-table-wrap { max-height: 260px; overflow: auto; }
+.chart-svg { display: block; overflow: visible; }
+.chart-grid { stroke: var(--color-neutral-300); stroke-width: 1; }
+.chart-baseline { stroke: var(--color-neutral-500); stroke-width: 1; }
+.chart-axis-text { font-size: 10px; fill: color-mix(in srgb, var(--color-text) 60%, transparent); font-variant-numeric: tabular-nums; }
+.chart-column { cursor: pointer; outline: none; }
+.chart-band { fill: transparent; }
+.chart-column:hover .chart-band, .chart-column:focus-visible .chart-band { fill: color-mix(in srgb, var(--color-text) 6%, transparent); }
+.chart-band--selected, .chart-column:hover .chart-band--selected { fill: var(--color-accent-100); }
+.chart-column:focus-visible .chart-band { stroke: var(--color-accent); stroke-width: 2; }
+.chart-tooltip {
+  position: absolute; z-index: 5; min-width: 140px; pointer-events: none;
+  padding: var(--space-2) var(--space-3); font-size: 12px;
+  background: var(--color-bg); border: 1px solid var(--color-divider); box-shadow: var(--shadow-md);
+}
+.chart-tooltip-title { font-family: var(--font-heading); font-weight: var(--font-heading-weight); margin-bottom: 4px; }
+.chart-tooltip-row { display: grid; grid-template-columns: 10px 1fr auto; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+.chart-empty { font-size: 13px; margin: 0; }
+.hbars { display: flex; flex-direction: column; gap: 2px; }
+.hbar-row {
+  display: grid; grid-template-columns: minmax(80px, 34%) 1fr; align-items: center; gap: var(--space-2);
+  padding: 3px 4px; font-size: 12px; cursor: pointer;
+}
+.hbar-row:hover { background: color-mix(in srgb, var(--color-text) 5%, transparent); }
+.hbar-row--selected, .hbar-row--selected:hover { background: var(--color-accent-100); }
+.hbar-label { font-family: monospace; font-size: 12px; }
+.hbar-track { display: flex; align-items: center; gap: 2px; min-width: 0; }
+.hbar-segment { height: 12px; min-width: 2px; }
+.hbar-segment:last-of-type { border-radius: 0 4px 4px 0; }
+.hbar-value { margin-left: 6px; font-variant-numeric: tabular-nums; color: color-mix(in srgb, var(--color-text) 75%, transparent); }
+
+/* — audit stat tiles and status tags — */
+.stat-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: var(--space-2); }
+.stat-tile { display: flex; flex-direction: column; gap: 2px; padding: var(--space-2) var(--space-3); border: 1px solid var(--color-divider); }
+.stat-tile-label { font-size: 11px; color: color-mix(in srgb, var(--color-text) 65%, transparent); }
+.stat-tile-value { font-size: 24px; font-weight: 500; line-height: 1.15; font-variant-numeric: proportional-nums; }
+.stat-tile-value--alert { color: #b02a2a; }
+.stat-tile-note { font-size: 11px; color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+.status-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 2px 8px; border: 1px solid var(--color-divider); white-space: nowrap; }
+.status-tag-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+.filter-chips { display: flex; flex-wrap: wrap; gap: var(--space-1); align-items: center; }
+.filter-chip { font-size: 12px; padding: 2px 8px; border: 1px solid var(--color-divider); background: transparent; cursor: pointer; font-family: inherit; color: inherit; }
+.filter-chip[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-bg); }
+.audit-section { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3); }
+.audit-grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-4); }
+.mono { font-family: monospace; font-size: 12px; }
+.failure-badge { display: inline-flex; align-items: center; gap: 2px; margin-left: 6px; font-size: 11px; color: #b02a2a; font-weight: 500; }
