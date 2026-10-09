@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 <<<<<<< HEAD
+- Removed captured turn examples and local filesystem paths from `Design/`.
+
 - The API server now rejects (403) any request whose `Host` header isn't a
   loopback name (`localhost`, `127.0.0.1`, `[::1]`) on port 3001 or the Vite
   dev port 5173, closing a DNS-rebinding path by which a malicious web page
