@@ -4,6 +4,9 @@ import { checkConfig } from "./services/config-check/config-check.js";
 const port = 3001;
 // Loopback-only per architecture.md §11.2 — never expose to other hosts.
 const host = "127.0.0.1";
+// The Vite dev server (packages/web/vite.config.ts, strictPort) proxies
+// /api here without changeOrigin, so its own Host (port 5173) arrives as-is.
+const viteDevServerPort = 5173;
 
 const configStatus = checkConfig();
 if (configStatus.warnings.length > 0) {
@@ -13,6 +16,6 @@ if (configStatus.warnings.length > 0) {
   }
 }
 
-createApp().listen(port, host, () => {
+createApp({ allowedHostPorts: [port, viteDevServerPort] }).listen(port, host, () => {
   console.log(`Server listening on http://${host}:${port}`);
 });

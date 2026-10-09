@@ -21,6 +21,7 @@ import { UnknownLogProviderIdError } from "./data-sources/log-providers/registry
 import { composeLogProviders, type LogProviderCompositionOptions } from "./composition/compose-log-providers.js";
 import { AuditQueryService } from "./services/tool-audit/audit-query-service.js";
 import { parseSessionRangeQuery, parseToolCallFilterQuery } from "./services/tool-audit/audit-query-params.js";
+import { createLoopbackHostGuard } from "./http/loopback-host-guard.js";
 
 const APP_VERSION = (
   JSON.parse(
@@ -28,10 +29,17 @@ const APP_VERSION = (
   ) as { version: string }
 ).version;
 
-export type CreateAppOptions = LogProviderCompositionOptions;
+export interface CreateAppOptions extends LogProviderCompositionOptions {
+  // Ports a request's Host header may name (DNS-rebinding guard,
+  // architecture.md §11.2): the server's own port plus the Vite dev server's,
+  // whose proxy forwards the browser's Host unchanged. Omitted (tests on an
+  // ephemeral port) accepts any port, still on a loopback hostname only.
+  allowedHostPorts?: readonly number[];
+}
 
 export function createApp(options: CreateAppOptions = {}): Express {
   const app = express();
+  const { allowedHostPorts, ...compositionOptions } = options;
   const {
     registry,
     piAgentProvider,
@@ -39,7 +47,7 @@ export function createApp(options: CreateAppOptions = {}): Express {
     resolvedDebugLogsDirPaths,
     resolvedVscodeSettingsPath,
     resolvedAppSettingsDir,
-  } = composeLogProviders(options);
+  } = composeLogProviders(compositionOptions);
   const auditQueries = new AuditQueryService(registry);
 
   // Used only by GET /api/sessions/:id/system-prompt below, which stays
@@ -52,6 +60,8 @@ export function createApp(options: CreateAppOptions = {}): Express {
     return openReadOnlyDb(resolvedDbPath);
   }
 
+  // First, before any route or body parsing touches session data.
+  app.use(createLoopbackHostGuard({ allowedPorts: allowedHostPorts }));
   app.use(express.json());
 
   app.get("/api/health", (_req, res) => {

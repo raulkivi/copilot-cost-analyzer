@@ -19,6 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `gh-cp-chat-analyser` repository name.
 
 ### Security
+- The API server now rejects (403) any request whose `Host` header isn't a
+  loopback name (`localhost`, `127.0.0.1`, `[::1]`) on port 3001 or the Vite
+  dev port 5173, closing a DNS-rebinding path by which a malicious web page
+  could read session transcripts and HAR bodies. The Vite dev server now uses
+  a fixed port (`strictPort`) so the allow-list matches.
 - `npm audit fix`: `proxy-addr` 2.0.8 (critical `GHSA-jqcg-44mw-7w3h`, via
   Express, production), `@modelcontextprotocol/sdk` 1.32.1 (high
   `GHSA-6qxp-vccf-f47h`, production; the audit MCP server uses no OAuth) and

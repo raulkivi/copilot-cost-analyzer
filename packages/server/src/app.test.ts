@@ -153,6 +153,34 @@ describe("GET /api/health", () => {
   });
 });
 
+describe("Host header guard (DNS rebinding, architecture.md §11.2)", () => {
+  it("rejects a request whose Host is not a loopback name with 403", async () => {
+    const app = createApp({ allowedHostPorts: [3001, 5173] });
+
+    const response = await request(app).get("/api/learn/scenarios").set("Host", "evil.example.com");
+
+    expect(response.status).toBe(403);
+    expect(response.body.error).toMatch(/host/i);
+  });
+
+  it.each(["localhost:3001", "127.0.0.1:3001", "[::1]:3001", "localhost:5173", "127.0.0.1:5173"])(
+    "serves a request with Host %s",
+    async (host) => {
+      const app = createApp({ allowedHostPorts: [3001, 5173] });
+
+      const response = await request(app).get("/api/health").set("Host", host);
+
+      expect(response.status).toBe(200);
+    },
+  );
+
+  it("rejects a foreign Host even with no port allow-list configured", async () => {
+    const response = await request(createApp()).get("/api/health").set("Host", "evil.example.com:3001");
+
+    expect(response.status).toBe(403);
+  });
+});
+
 describe("GET /api/learn/scenarios", () => {
   it("returns every bundled learn scenario as valid Sessions", async () => {
     const app = createApp();

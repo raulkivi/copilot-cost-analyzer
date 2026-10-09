@@ -1498,6 +1498,7 @@ copilot-cost-analyzer/
         platform/
           vscode-paths/
           pi-agent-paths/
+        http/          # cross-cutting Express middleware (loopback Host guard, §11.2)
         api/
       fixtures/        # bundled Learn-mode scenario files + jsonl/mitmproxy/pi-agent test fixtures
     web/
@@ -1531,6 +1532,22 @@ copilot-cost-analyzer/
 - The local server binds to `localhost`/loopback only — never `0.0.0.0` —
   since it exposes session contents (which may include file paths, code
   snippets, terminal output).
+- **Host-header allow-list (DNS-rebinding defence).** Loopback binding plus
+  no CORS stops a cross-origin page from reading responses — but a DNS
+  rebinding attack re-points the attacker's own hostname at `127.0.0.1`,
+  making their page *same-origin* with this server, so neither defence
+  applies. The browser still sends the attacker's hostname in `Host`, so
+  `http/loopback-host-guard.ts`'s `createLoopbackHostGuard` (registered
+  first in `app.ts`, before any route) answers `403` with a JSON `error`
+  unless `Host` is literally `localhost`, `127.0.0.1` or `[::1]` on an
+  allowed port. `server.ts` passes the allowed ports — its own `3001` and
+  the Vite dev server's `5173`, since `vite.config.ts`'s `/api` proxy has no
+  `changeOrigin` and forwards the browser's `Host` unchanged (that port is
+  pinned with `strictPort` so the allow-list can't drift). `createApp()`
+  without `allowedHostPorts` (tests on an ephemeral port) still requires a
+  loopback hostname, any port. Only the raw `Host` header is read, never
+  `X-Forwarded-Host` (`trust proxy` stays off). The Vite dev server itself
+  rejects non-loopback hosts via its own default `server.allowedHosts`.
 - `sessionId` (and any other path parameter used to build a filesystem path
   under `debug-logs/`) is validated against an allow-list pattern before use,
   to prevent path traversal into arbitrary files on disk.
