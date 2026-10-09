@@ -90,4 +90,22 @@ describe("ExplanationPanel", () => {
     expect(screen.getByText("src/a.ts")).toBeInTheDocument();
     expect(screen.getByText("src/b.ts")).toBeInTheDocument();
   });
+
+  it("shows each tool call's outcome and shell command in analyze mode", () => {
+    const turn = makeTurn({
+      toolCalls: [
+        {
+          name: "Bash",
+          argsSummary: "foo --version",
+          shell: { command: "foo --version", program: "foo" },
+          outcome: { status: "error", exitCode: 127, failureCategory: "command-not-found" },
+        },
+      ],
+    });
+
+    render(<ExplanationPanel turn={turn} mode="analyze" toolCallsAvailable={true} />);
+
+    expect(screen.getByText("Failed · Command not found")).toBeInTheDocument();
+    expect(screen.getByText("foo --version")).toBeInTheDocument();
+  });
 });

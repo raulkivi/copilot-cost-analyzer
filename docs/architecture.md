@@ -216,11 +216,30 @@ interface TurnUsage {
 }
 
 interface ToolCallRecord {
+  id?: string; // Analyze mode only — tool_use id / toolCallId
   name: string;
-  argsSummary: string;
+  kind?: "shell" | "file-read" | "file-write" | "search" | "web" | "mcp" | "subagent" | "other";
+  argsSummary: string; // bounded (≤ 300 chars) and redacted — never a Write's whole file content
+  shell?: { command: string; program?: string; cwd?: string };
+  outcome?: ToolCallOutcome; // Phase 9.10 tool-call audit
+  startedAt?: string;
+  durationMs?: number;
+  roundIndex?: number; // which LLM round in the turn issued it
   filesTouched?: string[]; // Analyze mode only
   tokenCount?: TokenCount; // Analyze mode only
 }
+
+// Phase 9.10 (plans/tool-call-audit.md). "unknown" requires a reason
+// (constraint 6); only error/interrupted/denied carry a failureCategory.
+interface ToolCallOutcome {
+  status: "success" | "error" | "interrupted" | "denied" | "unknown";
+  reason?: string;
+  exitCode?: number; // only when the source states it explicitly
+  failureCategory?: FailureCategory; // command-not-found, wrong-directory, invalid-arguments, dependency-missing, git-state, …
+  classificationEvidence?: { ruleId: string; excerpt: string /* ≤ 200 chars, redacted */ };
+}
+// SessionAudit / AuditRollup (packages/domain/src/session-audit.ts) are
+// server-computed aggregates over these records — see §8's audit endpoints.
 
 interface Turn {
   index: number;
@@ -1283,6 +1302,17 @@ size threshold. Subagent transcripts (a session's sibling
 that sibling directory, excluding them structurally rather than by
 filename convention.
 
+**Tool-call outcomes (Phase 9.10).** Confirmed against a real capture
+(`fixtures/claude-code-audit/`): a failed call's `tool_result` has
+`is_error: true` and content starting `Exit code N\n`; a harness timeout is
+`Exit code 143\nCommand timed out after …`; a success's `toolUseResult` is
+`{ stdout, stderr, interrupted, … }`. With N **parallel** tool calls, each
+`tool_result` entry is parented to its own `tool_use` entry, so N-1 results
+sit *off* the `last-prompt` branch — `tool-result-index.ts` therefore pairs
+results by `tool_use_id` across the whole file (the turn inspector uses the
+same file-wide search). `tool-call-extractor.ts` turns each pair into a
+classified `ToolCallRecord` via the shared `services/tool-audit/*` helpers.
+
 ### 6.3 Startup configuration check
 
 ```mermaid
@@ -1414,6 +1444,9 @@ sources themselves.
 | `GET /api/sessions/:id` | Full enriched `Session` from the active provider (mode=`analyze`), including `usageDataAvailable` |
 | `GET /api/sessions/:id/system-prompt` | Raw `text/plain` of the session's captured base system prompt (Phase 6 addendum); 404 if no system-prompt artifact was captured |
 | `GET /api/sessions/:id/turns/:turnIndex` | `TurnInspectorDetail` — one turn's actual LLM request/response round-trip(s), scoped to only the content that turn added (Phase 9.5, §6.2.4); used for on-demand deep dives, avoiding sending every turn's full detail up front. 404 if the session or turn index doesn't exist; 400 for a non-numeric/negative `turnIndex` |
+| `GET /api/sessions/:id/audit` | `SessionAudit` (Phase 9.10, [plans/tool-call-audit.md](plans/tool-call-audit.md)): per-status totals, failure rate over known outcomes (`null` when none known), by-tool/program/category breakdowns, per-turn outcome counts, every classified call, retry groups, failure-recovery cost, and outcome coverage. Optional `?provider=<id>` audits a provider other than the active one (400 if unknown); 404 for an unknown session |
+| `GET /api/sessions/:id/tool-calls` | `{ total, calls: AuditedToolCall[] }`: one session's classified tool calls, filtered by `status`/`category` (comma-separated enum lists), `tool`, `program`, `turn`, `limit`, `provider`. 400 on an invalid value |
+| `GET /api/audit` | `AuditRollup` over the most recent sessions (`limit`, default 50, max 500) whose `startedAt` falls in `since`..`until` (ISO date or timestamp, compared at the bound's precision): totals, top failing commands, daily counts, per-session summary, category/program/tool breakdowns. Optional `provider` |
 | `GET /api/config/status` | `ConfigStatus` — current prerequisite-setting check results and any `warnings[]` (§6.3), including the effective `minRetainedSessionLogsThreshold` |
 | `PUT /api/config/retention-threshold` | Sets the persisted `minRetainedSessionLogsThreshold` override (body: `{ value: number }`, must be a positive integer, else 400); returns the fresh `ConfigStatus` so the caller can update both the header control and the warning banner from one response |
 

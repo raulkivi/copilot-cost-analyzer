@@ -1,5 +1,5 @@
 import { sumTokenCounts, unavailableTokenCount, type TokenCount } from "@copilot-cost-analyzer/domain";
-import type { ToolCallRecord, TurnUsage } from "@copilot-cost-analyzer/domain";
+import type { TurnUsage } from "@copilot-cost-analyzer/domain";
 import type { ClaudeCodeRawEntry } from "./claude-code-jsonl-reader.js";
 import { groupTurnEntriesByRound, type ClaudeCodeRound } from "./round-grouper.js";
 import type { ClaudeCodeTurnGroup } from "./turn-grouper.js";
@@ -89,35 +89,4 @@ export function extractTurnUsage(group: ClaudeCodeTurnGroup): TurnUsage {
     model,
     roundsCount: rounds.length,
   };
-}
-
-// One ToolCallRecord per `tool_use` content block in the turn. Unlike
-// pi-agent/usage-extractor.ts (which iterates ToolResultMessages and looks
-// up the matching tool-call block for its args), Claude Code's tool_use
-// block already carries both `name` and `input` directly — no lookup
-// against the paired tool_result is needed just to describe the call.
-export function extractToolCalls(group: ClaudeCodeTurnGroup): ToolCallRecord[] {
-  const toolCalls: ToolCallRecord[] = [];
-
-  for (const entry of group.entries) {
-    if (entry.type !== "assistant") {
-      continue;
-    }
-    const content = messageOf(entry)?.content;
-    if (!Array.isArray(content)) {
-      continue;
-    }
-    for (const block of content) {
-      if (typeof block !== "object" || block === null || (block as { type?: unknown }).type !== "tool_use") {
-        continue;
-      }
-      const toolUse = block as { name?: unknown; input?: unknown };
-      toolCalls.push({
-        name: typeof toolUse.name === "string" ? toolUse.name : "unknown",
-        argsSummary: toolUse.input !== undefined ? JSON.stringify(toolUse.input) : "",
-      });
-    }
-  }
-
-  return toolCalls;
 }

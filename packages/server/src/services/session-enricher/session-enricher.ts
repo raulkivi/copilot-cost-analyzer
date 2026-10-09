@@ -76,7 +76,7 @@ function unavailableToolCallTokenCount(): TokenCount {
 // SQLite's session_files rows only cover tools that touched a file — tools
 // like manage_todo_list/run_in_terminal never appear there. invokedToolNames
 // (from main.jsonl's tool_call events, jsonl/tool-inventory.ts) fills that
-// gap; a name already covered by a file-based entry isn't duplicated. Every
+// gap, one record per invocation (see buildToolCalls). Every
 // entry's tokenCount is explicit-unavailable (constraint 6): neither source
 // records a per-tool-call token figure.
 // fileRows is pre-grouped by turn_index once per buildSession call (rather
@@ -118,16 +118,38 @@ function buildToolCalls(
     tokenCount: unavailableToolCallTokenCount(),
   }));
 
-  const invokedOnlyNames = Array.from(
-    new Set(invokedToolNames.filter((name) => !filesByToolName.has(name))),
-  );
-  const invokedOnlyCalls: ToolCallRecord[] = invokedOnlyNames.map((name) => ({
-    name,
-    argsSummary: "",
-    tokenCount: unavailableToolCallTokenCount(),
-  }));
+  // One record per jsonl tool_call invocation (Phase 9.10 audit: counts must
+  // not be deduped by name). A file-based record already stands for the
+  // first invocation of its tool, so only the remaining invocations are
+  // added; a name with files but no jsonl invocation stays one record, since
+  // SQLite alone can't say how many calls touched those files.
+  const remainingByName = new Map<string, number>();
+  for (const name of invokedToolNames) {
+    remainingByName.set(name, (remainingByName.get(name) ?? 0) + 1);
+  }
+  for (const name of filesByToolName.keys()) {
+    const remaining = remainingByName.get(name);
+    if (remaining !== undefined) {
+      remainingByName.set(name, remaining - 1);
+    }
+  }
+  const invokedOnlyCalls: ToolCallRecord[] = [];
+  for (const name of invokedToolNames) {
+    const remaining = remainingByName.get(name) ?? 0;
+    if (remaining <= 0) {
+      continue;
+    }
+    remainingByName.set(name, remaining - 1);
+    invokedOnlyCalls.push({ name, argsSummary: "", tokenCount: unavailableToolCallTokenCount() });
+  }
 
-  return [...fileBasedCalls, ...invokedOnlyCalls];
+  // Keep each file-based record next to that tool's extra invocations.
+  const ordered: ToolCallRecord[] = [];
+  for (const fileCall of fileBasedCalls) {
+    ordered.push(fileCall, ...invokedOnlyCalls.filter((call) => call.name === fileCall.name));
+  }
+  const fileNames = new Set(filesByToolName.keys());
+  return [...ordered, ...invokedOnlyCalls.filter((call) => !fileNames.has(call.name))];
 }
 
 // Total fallback for a turn with zero extracted llm_request spans — with no

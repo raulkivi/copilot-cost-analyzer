@@ -7,6 +7,8 @@ import { fetchSession, fetchSessions } from "./api-client/sessions.js";
 import { AdviceExportDialog } from "./components/AdviceExportDialog.js";
 import { AdviceExportTriggerBar } from "./components/AdviceExportTriggerBar.js";
 import { AppHeader } from "./components/AppHeader.js";
+import { AuditRollupPanel } from "./components/AuditRollupPanel.js";
+import { SessionAuditPanel } from "./components/SessionAuditPanel.js";
 import { ConfigWarningBanner } from "./components/ConfigWarningBanner.js";
 import { ExplanationPanel } from "./components/ExplanationPanel.js";
 import { SessionList } from "./components/SessionList.js";
@@ -32,6 +34,16 @@ const RIGHT_TAB_OPTIONS = [
   { value: "system-prompt", label: "System prompt" },
   { value: "tools", label: "Tools" },
 ] as const;
+
+// Analyze-mode center views (Phase 9.10): the existing turns table, one
+// session's tool-call audit, or the cross-session audit.
+const CENTER_VIEW_OPTIONS = [
+  { value: "turns", label: "Turns" },
+  { value: "session-audit", label: "Tool audit" },
+  { value: "rollup", label: "All sessions" },
+] as const;
+
+type CenterView = (typeof CENTER_VIEW_OPTIONS)[number]["value"];
 
 const EMPTY_STATES = {
   learn: {
@@ -59,6 +71,7 @@ export function App() {
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [turnInspectorOpen, setTurnInspectorOpen] = useState(false);
   const [providers, setProviders] = useState<LogProviderDescriptor[]>([]);
+  const [centerView, setCenterView] = useState<CenterView>("turns");
   const {
     session,
     selectedTurnIndex,
@@ -164,6 +177,7 @@ export function App() {
     setAdviceDialogOpen(false);
     setInspectorOpen(false);
     setTurnInspectorOpen(false);
+    setCenterView("turns");
     setMode(next);
   }
 
@@ -183,24 +197,40 @@ export function App() {
     setInspectorOpen(false);
     setTurnInspectorOpen(false);
     if (mode === "analyze") {
-      const requestId = ++latestSessionRequestId.current;
-      fetchSession(picked.id)
-        .then((result) => {
-          // Ignore a response for a session the user has since navigated
-          // away from — otherwise a slower earlier request can resolve
-          // after a faster later one and overwrite it.
-          if (requestId === latestSessionRequestId.current) {
-            loadSession(result);
-          }
-        })
-        .catch((error: Error) => {
-          if (requestId === latestSessionRequestId.current) {
-            setFetchError(error.message);
-          }
-        });
+      openAnalyzeSession(picked.id);
     } else {
       loadSession(picked);
     }
+  }
+
+  function openAnalyzeSession(sessionId: string): void {
+    const requestId = ++latestSessionRequestId.current;
+    fetchSession(sessionId)
+      .then((result) => {
+        // Ignore a response for a session the user has since navigated
+        // away from — otherwise a slower earlier request can resolve
+        // after a faster later one and overwrite it.
+        if (requestId === latestSessionRequestId.current) {
+          loadSession(result);
+        }
+      })
+      .catch((error: Error) => {
+        if (requestId === latestSessionRequestId.current) {
+          setFetchError(error.message);
+        }
+      });
+  }
+
+  function handleOpenSessionAudit(sessionId: string): void {
+    setInspectorOpen(false);
+    setTurnInspectorOpen(false);
+    setCenterView("session-audit");
+    openAnalyzeSession(sessionId);
+  }
+
+  function handleInspectTurn(turnPosition: number): void {
+    selectTurn(turnPosition);
+    setTurnInspectorOpen(true);
   }
 
   return (
@@ -286,8 +316,33 @@ export function App() {
             />
           </div>
 
-          <div>
-            {session ? (
+          <div style={centerView === "rollup" && mode === "analyze" ? { gridColumn: "2 / 4" } : undefined}>
+            {mode === "analyze" && (
+              <SegmentedControl
+                name="center-view"
+                options={CENTER_VIEW_OPTIONS}
+                value={centerView}
+                onChange={setCenterView}
+                className="center-view-seg"
+              />
+            )}
+            <div style={mode === "analyze" ? { marginTop: "var(--space-3)" } : undefined}>
+            {mode === "analyze" && centerView === "rollup" ? (
+              <AuditRollupPanel onOpenSession={handleOpenSessionAudit} key={activeProviderId} />
+            ) : mode === "analyze" && centerView === "session-audit" ? (
+              session ? (
+                <SessionAuditPanel
+                  sessionId={session.id}
+                  selectedTurnIndex={selectedTurnIndex}
+                  onSelectTurn={selectTurn}
+                  onInspectTurn={handleInspectTurn}
+                />
+              ) : (
+                <p className="text-muted" style={{ fontSize: 13 }}>
+                  Select a session to audit its tool calls.
+                </p>
+              )
+            ) : session ? (
               <>
                 <div
                   style={{
@@ -327,9 +382,10 @@ export function App() {
                 Select a {mode === "learn" ? "scenario" : "session"} to view its turns.
               </p>
             )}
+            </div>
           </div>
 
-          <div>
+          <div style={centerView === "rollup" && mode === "analyze" ? { display: "none" } : undefined}>
             {mode === "analyze" ? (
               <SegmentedControl
                 name="right-tab"

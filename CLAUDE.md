@@ -26,7 +26,12 @@ content here.
 - Commit all changes to git as soon as a phase's exit criterion is met,
   before starting the next phase.
 - Repo status: Phases 0-9.5 complete, Phase 9.6 built pending real-data
-  verification (see below), Phases 9.7-9.9 complete — npm workspaces with
+  verification (see below), Phases 9.7-9.10 complete (9.10: tool-call
+  audit — classified per-call outcomes, `GET /api/sessions/:id/audit`,
+  `/tool-calls`, `GET /api/audit`, a read-only stdio MCP server in
+  `packages/server/src/mcp/` launched via `scripts/mcp-server.sh`, and the
+  web Tool audit / All sessions views; see docs/plans/tool-call-audit.md)
+  — npm workspaces with
   `packages/domain`
   (zod schemas + types for every architecture.md §5 shape, including
   `Session.category`/`startedAt`/`providerId`, `ConfigWarning.severity`,

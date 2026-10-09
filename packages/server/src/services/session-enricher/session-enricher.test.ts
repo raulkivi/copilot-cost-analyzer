@@ -313,6 +313,25 @@ describe("buildSession", () => {
     ]);
   });
 
+  it("keeps one record per jsonl tool_call invocation instead of deduping by name (audit count fidelity)", () => {
+    const session = buildSession({
+      sessionRow,
+      turnRows,
+      fileRows,
+      mainJsonlAvailability: "missing",
+      // Same shape as fixtures/jsonl/real-session-with-usage.jsonl: the same
+      // tool invoked twice in one turn.
+      invokedToolNamesByTurn: [["read_file", "read_file", "manage_todo_list", "manage_todo_list"], []],
+    });
+
+    expect(session.turns[0].toolCalls.map((call) => [call.name, call.filesTouched ?? []])).toEqual([
+      ["read_file", ["src/a.ts", "src/b.ts"]],
+      ["read_file", []],
+      ["manage_todo_list", []],
+      ["manage_todo_list", []],
+    ]);
+  });
+
   it("populates session.systemPrompt and session.toolInventory from the passed-in breakdown/inventory", () => {
     const systemPrompt: SystemPromptComponent[] = [
       {

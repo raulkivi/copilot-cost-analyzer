@@ -22,6 +22,7 @@ export interface PiToolResultMessage {
   toolCallId?: unknown;
   toolName?: unknown;
   content?: unknown;
+  isError?: unknown; // pi docs schema; not yet verified against a real capture
 }
 
 export interface PiToolCallBlock {

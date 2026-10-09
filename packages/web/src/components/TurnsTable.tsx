@@ -1,5 +1,6 @@
 import type { TokenCount, Turn } from "@copilot-cost-analyzer/domain";
 import { sumTokenCounts } from "@copilot-cost-analyzer/domain";
+import { isFailedStatus } from "@copilot-cost-analyzer/domain";
 import { formatAiCredits } from "../lib/format-ai-credits.js";
 import { onKeyActivate } from "../lib/on-key-activate.js";
 import { TRIGGER_LABELS } from "../lib/trigger-labels.js";
@@ -10,6 +11,22 @@ const CUMULATIVE_COST_UNKNOWN_REASON =
 
 function formatTokenCount(tokenCount: TokenCount): string {
   return tokenCount.known ? tokenCount.value.toLocaleString() : "—";
+}
+
+// Tool-call count plus a failure badge (Phase 9.10 audit) — icon + number +
+// accessible label, so a failed turn stands out without relying on colour.
+function ToolCallsCell({ turn }: { turn: Turn }) {
+  const failed = turn.toolCalls.filter((call) => call.outcome && isFailedStatus(call.outcome.status)).length;
+  return (
+    <>
+      {turn.toolCalls.length}
+      {failed > 0 && (
+        <span className="failure-badge" aria-label={`${failed} of ${turn.toolCalls.length} tool calls failed`}>
+          <span aria-hidden="true">✕{failed}</span>
+        </span>
+      )}
+    </>
+  );
 }
 
 function formatRoundsCount(roundsCount: number | undefined): string {
@@ -39,6 +56,7 @@ export function TurnsTable({ turns, selectedTurnIndex, onSelectTurn }: TurnsTabl
           <th>Turn</th>
           <th>Trigger</th>
           <th>Rounds</th>
+          <th>Calls</th>
           <th>Uncached in</th>
           <th>Cache read</th>
           <th>Cache write</th>
@@ -73,6 +91,9 @@ export function TurnsTable({ turns, selectedTurnIndex, onSelectTurn }: TurnsTabl
               )}
             </td>
             <td>{formatRoundsCount(turn.usage.roundsCount)}</td>
+            <td style={{ whiteSpace: "nowrap" }}>
+              <ToolCallsCell turn={turn} />
+            </td>
             <td>{formatTokenCount(turn.usage.uncachedInput)}</td>
             <td>{formatTokenCount(turn.usage.cacheRead)}</td>
             <td>{formatTokenCount(turn.usage.cacheWrite)}</td>
