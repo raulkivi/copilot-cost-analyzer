@@ -13,7 +13,7 @@
 ## Checklist
 
 - [ ] Failing test written first, then the implementation
-- [ ] `npm run lint`, `npm run build` and `npm test` pass
+- [ ] `npm run lint`, `npm run typecheck`, `npm run build` and `npm test` pass
 - [ ] Docs updated if behavior or design changed
 - [ ] CHANGELOG entry added under `[Unreleased]`
 - [ ] No secrets, real chat text or hidden Unicode characters

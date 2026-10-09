@@ -9,6 +9,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "bundle": "esbuild src/index.ts --bundle --platform=node --format=esm --target=node18 --outfile=dist/pi-system-prompt-logger.js"
   },
   "license": "MIT",

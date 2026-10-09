@@ -115,6 +115,89 @@ describe("PiAgentLogProvider", () => {
     await expect(provider.readSession("does-not-exist")).resolves.toBeNull();
   });
 
+  // schema-v3-session.jsonl follows the published schema shipped in the
+  // vendored @earendil-works/pi-coding-agent (docs/session-format.md,
+  // docs/message-types.md): leading system message, `arguments` on toolCall,
+  // `thinking` on thinking blocks, nested toolResult usage, a top-level
+  // cache_warm `usage` entry, and a compaction with usage + systemMessage.
+  describe("published-schema fixture (schema-v3-session.jsonl)", () => {
+    const schemaSessionPath = path.join(fixturesDir, "schema-v3-session.jsonl");
+    const schemaSessionId = computePiFileHash(schemaSessionPath);
+
+    it("counts every usage-bearing entry toward its turn: assistant, toolResult, cache_warm usage, compaction", async () => {
+      const session = await new PiAgentLogProvider({ sessionsDirPath: fixturesDir }).readSession(schemaSessionId);
+
+      expect(session?.turns).toHaveLength(2);
+      const [first, second] = session!.turns;
+      expect(first.usage.uncachedInput).toEqual({ known: true, value: 1240 });
+      expect(first.usage.output).toEqual({ known: true, value: 100 });
+      expect(first.usage.cacheRead).toEqual({ known: true, value: 51800 });
+      expect(first.usage.cacheWrite).toEqual({ known: true, value: 800 });
+      expect(first.usage.reasoning).toEqual({ known: true, value: 10 });
+      expect(first.usage.roundsCount).toBe(2);
+      expect(second.usage.uncachedInput).toEqual({ known: true, value: 3100 });
+      expect(second.usage.output).toEqual({ known: true, value: 280 });
+      expect(second.usage.reasoning.known).toBe(false);
+      expect(second.usage.model).toBe("gpt-5");
+      expect(second.triggeredEvent).toBe("compaction");
+    });
+
+    it("reads the shell command from ToolCall.arguments", async () => {
+      const session = await new PiAgentLogProvider({ sessionsDirPath: fixturesDir }).readSession(schemaSessionId);
+
+      expect(session?.turns[0].toolCalls).toEqual([
+        expect.objectContaining({ id: "call-1", name: "bash", argsSummary: "npm test", outcome: { status: "success" } }),
+      ]);
+    });
+
+    it("populates systemPrompt from the in-file system messages, without any sidecar", async () => {
+      const session = await new PiAgentLogProvider({ sessionsDirPath: fixturesDir }).readSession(schemaSessionId);
+
+      expect(session?.systemPrompt?.map((c) => [c.kind, c.label])).toEqual([
+        ["built-in", "Base system prompt (35 characters)"],
+        ["built-in", 'Prompt section "tools" (64 characters)'],
+        ["built-in", 'Prompt section "skills" (27 characters)'],
+        ["tool-definitions", "Tool definitions (2 tools)"],
+      ]);
+      expect(session?.systemPrompt?.every((c) => c.tokenCount.known)).toBe(true);
+    });
+
+    it("populates toolInventory from every tool declared on the branch, with the turns that invoked each", async () => {
+      const session = await new PiAgentLogProvider({ sessionsDirPath: fixturesDir }).readSession(schemaSessionId);
+
+      expect(session?.toolInventory).toEqual([
+        { name: "read", loaded: true, invokedInTurns: [] },
+        { name: "bash", loaded: true, invokedInTurns: [0] },
+        { name: "write", loaded: true, invokedInTurns: [] },
+      ]);
+    });
+
+    it("leaves toolInventory unset for a session file with no system messages", async () => {
+      const session = await new PiAgentLogProvider({ sessionsDirPath: fixturesDir }).readSession(
+        computePiFileHash(path.join(fixturesDir, "normal-session.jsonl")),
+      );
+
+      expect(session?.toolInventory).toBeUndefined();
+    });
+
+    it("readSystemPromptText returns the replayed in-file prompt text", async () => {
+      const text = await new PiAgentLogProvider({ sessionsDirPath: fixturesDir }).readSystemPromptText(schemaSessionId);
+
+      expect(text).toBe(
+        "You are an expert coding assistant.\n\n<tools>\n- read: Read a file\n- bash: Run a shell command\n</tools>\n\n<skills>\n- review\n</skills>",
+      );
+    });
+
+    it("readTurnDetail shows thinking text and toolCall arguments per the published schema", async () => {
+      const detail = await new PiAgentLogProvider({ sessionsDirPath: fixturesDir }).readTurnDetail(schemaSessionId, 0);
+
+      expect(detail?.rounds[0].response.reasoning).toEqual([{ kind: "text", text: "Run npm test." }]);
+      expect(detail?.rounds[1].request.toolCalls[0].args).toEqual([
+        { kind: "text", text: expect.stringContaining("npm test") },
+      ]);
+    });
+  });
+
   describe("readTurnDetail", () => {
     it("returns rounds for a known session/turn", async () => {
       const provider = new PiAgentLogProvider({ sessionsDirPath: fixturesDir });
@@ -192,6 +275,18 @@ describe("PiAgentLogProvider", () => {
           tokenCount: expect.objectContaining({ known: false }),
         },
       ]);
+    });
+
+    it("prefers the in-file system prompt over a matching sidecar record", async () => {
+      const schemaSessionPath = path.join(fixturesDir, "schema-v3-session.jsonl");
+      const systemPromptLogPath = writeSidecarLog(schemaSessionPath);
+      const provider = new PiAgentLogProvider({ sessionsDirPath: fixturesDir, systemPromptLogPath });
+      const id = computePiFileHash(schemaSessionPath);
+
+      const session = await provider.readSession(id);
+
+      expect(session?.systemPrompt?.[0].label).toBe("Base system prompt (35 characters)");
+      await expect(provider.readSystemPromptText(id)).resolves.toMatch(/^You are an expert coding assistant\./);
     });
 
     it("readSession leaves systemPrompt unset when systemPromptLogPath is omitted", async () => {

@@ -25,8 +25,9 @@ content here.
   met.
 - Commit all changes to git as soon as a phase's exit criterion is met,
   before starting the next phase.
-- Repo status: Phases 0-9.5 complete, Phase 9.6 built pending real-data
-  verification (see below), Phases 9.7-9.10 complete (9.10: tool-call
+- Repo status: Phases 0-9.5 complete, Phase 9.6 verified against pi's
+  published schema (vendored package docs/types) but still pending a real
+  captured session (see below), Phases 9.7-9.10 complete (9.10: tool-call
   audit — classified per-call outcomes, `GET /api/sessions/:id/audit`,
   `/tool-calls`, `GET /api/audit`, a read-only stdio MCP server in
   `packages/server/src/mcp/` launched via `scripts/mcp-server.sh`, and the
@@ -45,9 +46,13 @@ content here.
   `MitmproxyLogProvider` (local HAR captures, redacted, decoded through an
   Anthropic/OpenAI vendor-decoder registry), and `PiAgentLogProvider` (reads
   the pi coding agent's own JSONL session format directly, one branch-tree
-  leaf per `Session`; built from pi's published docs schema — `tool`/
-  `vision`/`reasoning`/`costAiCredits` stay unavailable pending verification
-  against a real captured session, see architecture.md §6.2.5), and
+  leaf per `Session`; verified against the published schema shipped in the
+  vendored `@earendil-works/pi-coding-agent` — sums usage from assistant,
+  toolResult, `usage` (e.g. cache_warm), compaction and branch_summary
+  entries, reads `Usage.reasoning`, and replays in-file system messages into
+  `systemPrompt`/`toolInventory`; `tool`/`vision`/`costAiCredits` stay
+  unavailable, and a real captured session is still outstanding, see
+  architecture.md §6.2.5), and
   `ClaudeCodeLogProvider` (reads the Claude Code CLI's own JSONL session
   format directly from `~/.claude/projects/`, one `Session` per file using
   the format's own authoritative active-branch pointer; every shape
@@ -72,9 +77,9 @@ content here.
   oversized/file/image content collapsed into placeholder chips), Vitest
   wired with TDD-first tests, and `packages/pi-system-prompt-logger`
   (a vendored Pi coding-agent extension — captures the assembled pi system
-  prompt to a JSONL sidecar log; `PiAgentLogProvider` optionally consumes
-  it when installed and a session matches, populating `Session.systemPrompt`
-  and the system prompt inspector for pi sessions, `toolInventory` still
-  unpopulated; `npm run configure`/`unconfigure` install/remove it, see
+  prompt to a JSONL sidecar log; `PiAgentLogProvider` falls back to it for
+  session files without in-file system messages, populating
+  `Session.systemPrompt` and the system prompt inspector for those pi
+  sessions; `npm run configure`/`unconfigure` install/remove it, see
   architecture.md §6.2.5). Phase 10 (VS Code extension packaging) is
   future/out of MVP scope — see implementation-plan.md.

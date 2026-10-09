@@ -128,6 +128,7 @@ Other commands (from the repo root):
 ```sh
 npm test           # runs vitest for every workspace
 npm run lint        # eslint across the repo
+npm run typecheck    # tsc --noEmit for every workspace, test files included
 npm run build        # type-checks/builds every workspace
 ```
 

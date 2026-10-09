@@ -34,13 +34,15 @@ describe("groupBranchEntriesByUserMessage", () => {
     expect(groups[0].entries.map((e) => e.id)).toEqual(["u1", "m1", "a1"]);
   });
 
-  it("drops entries that precede the first user message (nothing to attribute them to)", () => {
-    const entries = [modelChange("m0"), userMessage("u1"), assistantMessage("a1")];
+  it("attributes entries that precede the first user message (leading system message, an early usage entry) to the first turn's precedingEntries", () => {
+    const entries = [modelChange("m0"), userMessage("u1"), assistantMessage("a1"), userMessage("u2")];
 
     const groups = groupBranchEntriesByUserMessage(entries);
 
-    expect(groups).toHaveLength(1);
+    expect(groups).toHaveLength(2);
+    expect(groups[0].precedingEntries.map((e) => e.id)).toEqual(["m0"]);
     expect(groups[0].entries.map((e) => e.id)).toEqual(["u1", "a1"]);
+    expect(groups[1].precedingEntries).toEqual([]);
   });
 
   it("returns an empty array when there are no user messages at all", () => {

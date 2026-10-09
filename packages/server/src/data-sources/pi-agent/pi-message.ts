@@ -5,16 +5,21 @@ import type { PiRawEntry } from "./pi-jsonl-reader.js";
 // is a loosely-typed object here (role plus whatever fields that role
 // carries), never re-validated beyond what each caller actually reads, same
 // defensive posture as main-jsonl-reader.ts's attrs handling.
+// pi-ai's `Usage` (dist/types.d.ts; docs/message-types.md "Usage"):
+// `reasoning` is optional and already included in `output`.
+export interface PiUsage {
+  input?: unknown;
+  output?: unknown;
+  cacheRead?: unknown;
+  cacheWrite?: unknown;
+  reasoning?: unknown;
+}
+
 export interface PiAssistantMessage {
   role: "assistant";
   model?: unknown;
   content?: unknown[];
-  usage?: {
-    input?: unknown;
-    output?: unknown;
-    cacheRead?: unknown;
-    cacheWrite?: unknown;
-  };
+  usage?: PiUsage;
 }
 
 export interface PiToolResultMessage {
@@ -22,14 +27,20 @@ export interface PiToolResultMessage {
   toolCallId?: unknown;
   toolName?: unknown;
   content?: unknown;
-  isError?: unknown; // pi docs schema; not yet verified against a real capture
+  isError?: unknown;
+  usage?: PiUsage; // optional: nested model work the tool performed
 }
 
 export interface PiToolCallBlock {
   type: "toolCall";
   id?: unknown;
   name?: unknown;
-  args?: unknown;
+  arguments?: unknown; // published schema (docs/message-types.md "ToolCall")
+  args?: unknown; // pre-schema fixtures named it `args`; read as a fallback only
+}
+
+export function toolCallArgumentsOf(block: PiToolCallBlock | null): unknown {
+  return block ? (block.arguments ?? block.args) : undefined;
 }
 
 export function messageOf(entry: PiRawEntry): Record<string, unknown> | null {

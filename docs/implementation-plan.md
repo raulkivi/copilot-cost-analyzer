@@ -899,6 +899,27 @@ clean. Once a real capture is available, revisit `usage-extractor.ts` and
 `turn-inspector-builder.ts`'s field-name assumptions and update this status
 note and architecture.md §6.2.5 accordingly.
 
+**Status update (2026-10-09): verified against the published schema shipped
+in the vendored `@earendil-works/pi-coding-agent` 0.87.1 — still not a real
+captured session.** Checked against that package's `docs/session-format.md`,
+`docs/message-types.md`, pi-ai `dist/types.d.ts` and `dist/core/
+session-manager.d.ts`/`.js`, the provider was dropping data, now fixed
+TDD-first: top-level `usage` entries (e.g. a 50k cache-read `cache_warm`)
+and optional usage on `toolResult`, `compaction` and `branch_summary`
+entries now count toward the turn they fall in (entries before the first
+user message toward the first turn); `reasoning` is read from
+`Usage.reasoning` (a subset of `output`) instead of hard-coded unavailable;
+`ToolCall.arguments` and `ThinkingContent.thinking` are read per the schema
+(the hand-authored fixtures had guessed `args`/`text`); and the in-file
+`role: "system"` messages (plus a compaction's `systemMessage` checkpoint)
+are replayed into `Session.systemPrompt` and, newly, `Session.toolInventory`
+— preferred over the Phase 9.8 sidecar, which stays as the fallback for
+files without system messages. `tool`/`vision` stay unavailable (confirmed:
+no such field in `Usage`), as does `costAiCredits`. A schema-faithful
+fixture, `fixtures/pi-agent/schema-v3-session.jsonl`, pins all of this;
+pinning against a real, redacted capture remains the one open step. See
+architecture.md §6.2.5.
+
 ## Phase 9.7 — Vendor `pi-system-prompt-logger`
 
 **Goal**: bring the previously-standalone `pi-system-prompt-logger` Pi

@@ -29,6 +29,7 @@ cd copilot-cost-analyzer
 npm ci
 npm test         # vitest for every workspace
 npm run lint     # eslint across the repo
+npm run typecheck # tsc --noEmit for every workspace, test files included
 npm run build    # type-check and build every workspace
 npm run dev      # server and web app together
 ```
@@ -45,7 +46,8 @@ React UI) and `packages/pi-system-prompt-logger` (optional Pi extension).
 3. Follow test-driven development: write the failing test first, then the code
    that makes it pass. Keep to the SOLID principles described in
    `docs/architecture.md`.
-4. Run `npm run lint`, `npm run build` and `npm test`. CI runs the same three.
+4. Run `npm run lint`, `npm run typecheck`, `npm run build` and `npm test`. CI
+   runs the same four.
 5. Update the README or `docs/` when behavior changes, and add a line under
    `[Unreleased]` in [CHANGELOG.md](CHANGELOG.md).
 6. Open a pull request using the template.
