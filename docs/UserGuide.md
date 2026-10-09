@@ -141,9 +141,14 @@ header area also holds the **Retention** field described below:
   step needed. Because a pi session can branch (fork/rewind to try a
   different approach mid-session), a session file with unmerged branches
   shows up as multiple sessions, titled `<name> (branch i of N)` — one per
-  branch tip. Tool-call, vision, and reasoning token breakdowns, plus AI
-  Credits (a GitHub Copilot-specific billing unit pi has no equivalent of),
-  are not yet available for pi sessions.
+  branch tip. Token totals include everything pi records — assistant
+  replies, nested tool usage, cache warming and compaction/branch summaries
+  — and reasoning tokens when the model's provider reports them. The
+  system prompt and tool list come from the session file itself (or, for
+  older sessions, from the optional `pi-system-prompt-logger` extension).
+  Tool-call and vision token breakdowns, plus AI Credits (a GitHub
+  Copilot-specific billing unit pi has no equivalent of), aren't available
+  for pi sessions.
 
 Switching the source clears the currently-selected session and reloads the
 session list from the newly active provider. A provider shows

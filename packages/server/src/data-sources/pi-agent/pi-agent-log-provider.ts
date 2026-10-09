@@ -18,7 +18,9 @@ import { groupBranchEntriesByUserMessage, type PiTurnGroup } from "./turn-groupe
 import { extractToolCalls, extractTurnUsage } from "./usage-extractor.js";
 import { buildTurnInspectorDetail } from "./turn-inspector-builder.js";
 import { computeBranchSessionId, computePiFileHash, parseBranchSessionId } from "./session-id.js";
-import { buildPiSystemPromptComponents } from "./system-prompt-components.js";
+import { buildPiSystemPromptComponents, buildPiSystemPromptComponentsFromState } from "./system-prompt-components.js";
+import { replaySystemMessages } from "./system-message-replay.js";
+import { buildToolInventory } from "../jsonl/tool-inventory.js";
 import { readSystemPromptSidecarIndex, type SidecarIndex } from "./system-prompt-sidecar-reader.js";
 
 const PROVIDER_ID = "pi-agent";
@@ -173,7 +175,23 @@ export class PiAgentLogProvider implements LogProvider {
     const knownUsageTurns = turns.filter((turn) => turn.usage.output.known);
     const model = knownUsageTurns.length > 0 ? knownUsageTurns[knownUsageTurns.length - 1].usage.model : "unknown";
     const id = leafCount > 1 ? computeBranchSessionId(filePath, leafId) : computePiFileHash(filePath);
-    const sidecarRecord = sidecarIndex.get(path.resolve(filePath));
+    // System prompt: prefer what pi persisted in the session file itself
+    // (system messages / compaction checkpoint, replayed along this branch);
+    // fall back to the optional pi-system-prompt-logger sidecar for sessions
+    // recorded before pi persisted system messages.
+    const inFileSystemPrompt = replaySystemMessages(branch);
+    const sidecarRecord = inFileSystemPrompt ? undefined : sidecarIndex.get(path.resolve(filePath));
+    const systemPrompt = inFileSystemPrompt
+      ? buildPiSystemPromptComponentsFromState(inFileSystemPrompt)
+      : sidecarRecord
+        ? buildPiSystemPromptComponents(sidecarRecord)
+        : undefined;
+    const toolInventory = inFileSystemPrompt
+      ? buildToolInventory(
+          inFileSystemPrompt.declaredToolNames,
+          turns.map((turn) => turn.toolCalls.map((call) => call.name)),
+        )
+      : undefined;
 
     return {
       id,
@@ -186,7 +204,8 @@ export class PiAgentLogProvider implements LogProvider {
       costAiCredits: unavailableTokenCount(NO_AI_CREDITS_REASON),
       usageDataAvailable: knownUsageTurns.length > 0,
       ...(header ? { startedAt: header.timestamp } : {}),
-      ...(sidecarRecord ? { systemPrompt: buildPiSystemPromptComponents(sidecarRecord) } : {}),
+      ...(systemPrompt ? { systemPrompt } : {}),
+      ...(toolInventory ? { toolInventory } : {}),
     };
   }
 
@@ -269,12 +288,17 @@ export class PiAgentLogProvider implements LogProvider {
   // (SystemPromptInspector) — not part of the shared LogProvider interface
   // (ISP: VscodeLogProvider/MitmproxyLogProvider have no equivalent), same
   // precedent as the VS-Code-only system-prompt route special-casing
-  // VscodeLogProvider directly. Re-reads the sidecar log fresh each call,
+  // VscodeLogProvider directly. The in-file system prompt (replayed along
+  // this branch) wins; otherwise re-reads the sidecar log fresh each call,
   // same "no caching layer" posture as readTurnDetail.
   async readSystemPromptText(sessionId: string): Promise<string | null> {
     const resolved = await this.resolveBranch(sessionId);
     if (!resolved) {
       return null;
+    }
+    const inFileSystemPrompt = replaySystemMessages(walkBranch(resolved.entries, resolved.leafId));
+    if (inFileSystemPrompt) {
+      return inFileSystemPrompt.text;
     }
     const sidecarIndex = await this.loadSidecarIndex();
     return sidecarIndex.get(path.resolve(resolved.filePath))?.systemPrompt ?? null;

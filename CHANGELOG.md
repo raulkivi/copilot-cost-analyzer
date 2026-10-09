@@ -11,10 +11,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   pull request template.
 
 ### Fixed
+- pi sessions no longer undercount tokens: usage from top-level `usage`
+  entries (e.g. cache warming), tool results, compactions and branch
+  summaries now counts toward the turn it occurs in, and reasoning tokens
+  are read from pi's `Usage.reasoning`. Tool-call arguments and thinking text
+  are read from pi's published field names (`arguments`, `thinking`). The
+  system prompt and tool inventory now come from the system messages pi
+  stores in the session file, with the `pi-system-prompt-logger` sidecar as
+  the fallback for older files.
+- Web test files now type-check: `npm run typecheck` (new, every workspace,
+  test files included) runs in CI. `packages/web` gains `tsconfig.app.json`, an
+  app-only check without Node types, so browser code can't pick up `node:*`
+  imports while tests still can.
 - `SECURITY.md` linked private vulnerability reporting at the old
   `gh-cp-chat-analyser` repository name.
 
 ### Security
+- The API server now rejects (403) any request whose `Host` header isn't a
+  loopback name (`localhost`, `127.0.0.1`, `[::1]`) on port 3001 or the Vite
+  dev port 5173, closing a DNS-rebinding path by which a malicious web page
+  could read session transcripts and HAR bodies. The Vite dev server now uses
+  a fixed port (`strictPort`) so the allow-list matches.
+- `npm audit fix`: `proxy-addr` 2.0.8 (critical `GHSA-jqcg-44mw-7w3h`, via
+  Express, production), `@modelcontextprotocol/sdk` 1.32.1 (high
+  `GHSA-6qxp-vccf-f47h`, production; the audit MCP server uses no OAuth) and
+  `source-map-js` 1.2.2 (high `GHSA-68fv-2mgg-jv7q`, dev-only via Vite).
+  Still open: `brace-expansion` 5.0.9 (high) pinned by the `npm-shrinkwrap.json`
+  inside `@earendil-works/pi-coding-agent` 0.87.1, a dev-only types dependency
+  of `pi-system-prompt-logger`; only Pi 1.x ships 5.0.12, a major bump that is
+  tracked separately.
 - `pi-system-prompt-logger` now builds against `@earendil-works/pi-coding-agent`
   0.87.1, the renamed Pi package, instead of the abandoned
   `@mariozechner/pi-coding-agent` 0.73.1. Closes the last 5 Dependabot alerts

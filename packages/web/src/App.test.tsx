@@ -417,6 +417,7 @@ describe("App", () => {
       warnings: [
         {
           code: "retention-too-low",
+          severity: "required",
           settingId: "github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs",
           currentValue: 50,
           recommendedValue: 200,
@@ -468,6 +469,7 @@ describe("App", () => {
       warnings: [
         {
           code: "retention-too-low",
+          severity: "required",
           settingId: "github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs",
           currentValue: 50,
           recommendedValue: 200,
@@ -517,7 +519,7 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("checkbox", { name: /Fix the bug/ }));
     fireEvent.click(screen.getByRole("button", { name: "Export advice" }));
-    fireEvent.click(screen.getByRole("button", { name: "Preview", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Preview" }));
 
     expect(screen.getByTestId("advice-preview")).toHaveTextContent("Base system prompt (100 characters)");
   });
