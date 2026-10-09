@@ -1596,6 +1596,13 @@ refactored — red-green-refactor, not tests bolted on afterward.
   against VS Code and mitmproxy fixtures before wiring either provider into
   the registry. Write each vendor decoder's failing captured-exchange test
   before implementing it, including unknown-vendor and missing-usage cases.
+- Test files are type-checked like production code: `npm run typecheck`
+  runs `tsc --noEmit` over every workspace including its tests, and CI runs
+  it alongside lint/build/test (Vitest strips types without checking them,
+  so a test can pass while its fixtures no longer match the domain types).
+  `packages/web` checks twice: `tsconfig.json` (app + tests, with Node types
+  for tests that read fixtures from disk) and `tsconfig.app.json` (app code
+  only, browser types only, so app code can't silently import `node:*`).
 
 ### 11.5 Code quality: SOLID
 

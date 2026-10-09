@@ -60,6 +60,9 @@ describe("formatDuration", () => {
 
 describe("failedCountOf", () => {
   it("counts every failed status", () => {
-    expect(failedCountOf({ succeeded: 1, failed: 2, interrupted: 1, denied: 1, unknown: 3 })).toBe(4);
+    // A full status-counts object (as SessionAuditTotals carries): only
+    // failed + interrupted + denied count, succeeded/unknown are ignored.
+    const counts = { succeeded: 1, failed: 2, interrupted: 1, denied: 1, unknown: 3 };
+    expect(failedCountOf(counts)).toBe(4);
   });
 });

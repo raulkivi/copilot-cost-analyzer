@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   pull request template.
 
 ### Fixed
+- Web test files now type-check: `npm run typecheck` (new, every workspace,
+  test files included) runs in CI. `packages/web` gains `tsconfig.app.json`, an
+  app-only check without Node types, so browser code can't pick up `node:*`
+  imports while tests still can.
 - `SECURITY.md` linked private vulnerability reporting at the old
   `gh-cp-chat-analyser` repository name.
 
