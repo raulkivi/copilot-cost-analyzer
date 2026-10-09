@@ -19,6 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `gh-cp-chat-analyser` repository name.
 
 ### Security
+- `npm audit fix`: `proxy-addr` 2.0.8 (critical `GHSA-jqcg-44mw-7w3h`, via
+  Express, production), `@modelcontextprotocol/sdk` 1.32.1 (high
+  `GHSA-6qxp-vccf-f47h`, production; the audit MCP server uses no OAuth) and
+  `source-map-js` 1.2.2 (high `GHSA-68fv-2mgg-jv7q`, dev-only via Vite).
+  Still open: `brace-expansion` 5.0.9 (high) pinned by the `npm-shrinkwrap.json`
+  inside `@earendil-works/pi-coding-agent` 0.87.1, a dev-only types dependency
+  of `pi-system-prompt-logger`; only Pi 1.x ships 5.0.12, a major bump that is
+  tracked separately.
 - `pi-system-prompt-logger` now builds against `@earendil-works/pi-coding-agent`
   0.87.1, the renamed Pi package, instead of the abandoned
   `@mariozechner/pi-coding-agent` 0.73.1. Closes the last 5 Dependabot alerts
