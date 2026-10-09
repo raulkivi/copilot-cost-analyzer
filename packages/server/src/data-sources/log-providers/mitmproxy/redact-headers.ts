@@ -12,10 +12,19 @@ const CREDENTIAL_HEADER_NAMES = new Set([
   "set-cookie",
 ]);
 
+// New providers bring header names the fixed list cannot anticipate, so names that
+// look like credentials are stripped too. `tokens` (plural) is deliberately not
+// matched: rate-limit headers such as `x-ratelimit-limit-tokens` carry no secret.
+const CREDENTIAL_NAME_PATTERN = /(api[-_]?key|secret|(?:^|[-_])token$|(?:^|[-_])auth(?:[-_]|$)|security-token)/i;
+
+function isCredentialHeader(name: string): boolean {
+  return CREDENTIAL_HEADER_NAMES.has(name.toLowerCase()) || CREDENTIAL_NAME_PATTERN.test(name);
+}
+
 export function redactHeaders(headers: Record<string, string>): Record<string, string> {
   const redacted: Record<string, string> = {};
   for (const [name, value] of Object.entries(headers)) {
-    if (CREDENTIAL_HEADER_NAMES.has(name.toLowerCase())) {
+    if (isCredentialHeader(name)) {
       continue;
     }
     redacted[name] = value;

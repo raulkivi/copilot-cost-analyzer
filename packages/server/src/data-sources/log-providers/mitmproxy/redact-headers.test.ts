@@ -38,4 +38,23 @@ describe("redactHeaders", () => {
       "anthropic-version": "2023-06-01",
     });
   });
+
+  it.each([
+    "x-goog-api-key",
+    "X-Amz-Security-Token",
+    "x-auth-token",
+    "x-github-token",
+    "anthropic-api-key",
+    "x-client-secret",
+    "x-session-id-secret",
+  ])("strips credential-looking header %s that is not in the fixed list", (name) => {
+    expect(redactHeaders({ [name]: "live", "content-type": "application/json" })).toEqual({
+      "content-type": "application/json",
+    });
+  });
+
+  it("keeps token-count headers that merely contain the word token", () => {
+    const headers = { "anthropic-ratelimit-tokens-remaining": "1000", "x-ratelimit-limit-tokens": "5" };
+    expect(redactHeaders(headers)).toEqual(headers);
+  });
 });

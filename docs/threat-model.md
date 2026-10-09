@@ -91,7 +91,7 @@ into "trusted because nothing" = an unauthenticated LAN service. Consider
 a one-line startup assertion in `server.ts` (refuse to listen if `host`
 isn't a loopback address) so this trust boundary can't drift silently.
 
-**5.2 (Medium, concrete) — Widen credential redaction beyond the fixed
+**5.2 (Medium, concrete; header patterns done, query-string redaction n/a because captured URLs are not retained) — Widen credential redaction beyond the fixed
 header denylist.**
 Add query-string key redaction (common param names: `key`, `api_key`,
 `apikey`, `access_token`) and let each vendor decoder (`decoders/
